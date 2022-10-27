@@ -1,5 +1,5 @@
 Optolink
-########
+--------
 
 Dieses Projekt liest von einer Viessmann Vitotronic VScotHO1 einige Daten aus und sendet diese an einen MQTT Broker.
 Fehlercodes werden in Fehlermeldungen übersetzt.
