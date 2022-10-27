@@ -12,10 +12,6 @@
 const char* WIFI_SSID = "***";
 const char* WIFI_PW = "***";
 const int LED_PIN = LED_BUILTIN;
-const int PORT = 81;
-
-WiFiServer* server = NULL;
-WiFiClient serverClient;
 
 Timer t;
 
@@ -28,37 +24,36 @@ void setup() {
 	Serial.begin(4800);
 	pinMode(LED_PIN, OUTPUT);
 
-  setupWiFi();
+  	setupWiFi();
 
 	setupArduinoOta();
   
-  setupMqtt();
-  t.every(10000,checkMqtt);
+  	setupMqtt();
+  	t.every(10000,checkMqtt);
 
 	IPAddress HTTPS_ServerIP = WiFi.localIP();
 	Log("Server IP is: " + HTTPS_ServerIP.toString());
 
 	StartWebServer();
-  swSer.begin(4800, SWSERIAL_8E2, D2, D1);
-  server = new WiFiServer(PORT);
-  server->begin();
-  setupVito();
+  	swSer.begin(4800, SWSERIAL_8E2, D2, D1);
 
-  t.every(10000,getValues);
-  getVitoData();
+  	setupVito();
+
+  	t.every(10000,getValues);
+  	getVitoData();
 }
 
 void loop() {
 	WebServer.handleClient();
 	ArduinoOTA.handle();
-  mqttClient.loop();
-  VitoWiFi.loop();
-  t.update();
+  	mqttClient.loop();
+  	VitoWiFi.loop();
+  	t.update();
 }
 
 void getValues() {
-  Log("getvalues()");
-  getVitoData();
+  	Log("getvalues()");
+  	getVitoData();
 }
 
 void setupWiFi() {
@@ -79,7 +74,7 @@ void setupWiFi() {
 }
 
 void setupArduinoOta() {
-  ArduinoOTA.onStart([]() {
+  	ArduinoOTA.onStart([]() {
 
 		});
 	ArduinoOTA.onEnd([]() {
