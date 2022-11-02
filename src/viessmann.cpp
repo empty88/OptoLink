@@ -6,6 +6,8 @@
 VitoWiFi_setProtocol(P300);
 SoftwareSerial swSer;
 
+byte missingValuesCount = 0;
+
 DPTemp aussenTemp("AußenTemp", "boiler", 0x0800);
 DPHours betriebsstunden("Betriebsstunden", "boiler", 0x6568);
 DPTemp abgasTemp("AbgasTemp", "boiler", 0x0808);
@@ -89,6 +91,7 @@ void setupVito() {
 
 void tempCallbackHandler(const IDatapoint& dp, DPValue value) {
     publishMqtt(dp.getName(),(char*)String(value.getFloat()).c_str());
+    missingValuesCount = 0;
 }
 
 void globalCallbackHandler(const IDatapoint& dp, DPValue value) {

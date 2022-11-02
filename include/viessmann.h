@@ -5,6 +5,9 @@
 
 extern VitoWiFi_setProtocol(P300);
 extern SoftwareSerial swSer;
+
+extern byte missingValuesCount;
+
 void setupVito();
 
 void getVitoData();

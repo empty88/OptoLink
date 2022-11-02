@@ -47,26 +47,38 @@ void loop() {
 	WebServer.handleClient();
 	ArduinoOTA.handle();
   	mqttClient.loop();
-  	VitoWiFi.loop();
+  	if (missingValuesCount < 2) VitoWiFi.loop();
   	t.update();
 }
 
 void getValues() {
   	Log("getvalues()");
+	missingValuesCount++;
+	if (missingValuesCount > 1) {
+		digitalWrite(LED_PIN, LOW);		// LED an wenn Datenabruf übersprungen wird
+		if (missingValuesCount == 7) {	// nach 6 Fehlversuchen erneuter Versuch
+ 			missingValuesCount = 0;
+		} else {
+			Log("Skipping...");
+			return;
+		}
+	}
+	digitalWrite(LED_PIN, LOW);			// LED Signal bei Datenabruf
+	delay(200);
+	digitalWrite(LED_PIN, HIGH);
   	getVitoData();
 }
 
 void setupWiFi() {
-  	// -------- WLAN Connection
 	Log("Connecting to WLAN");
 	WiFi.mode(WIFI_STA);
 	WiFi.hostname("OptoLink");
 	WiFi.begin(WIFI_SSID, WIFI_PW);
 
 	while (WiFi.status() != WL_CONNECTED) {
-		digitalWrite(LED_PIN, HIGH);
-		delay(200);
 		digitalWrite(LED_PIN, LOW);
+		delay(200);
+		digitalWrite(LED_PIN, HIGH);
 		delay(200);
 		Serial.print(".");
 	}
