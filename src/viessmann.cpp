@@ -32,14 +32,15 @@ DPMode sparbetrieb("Sparbetrieb", "boiler", 0x3302);
 DPHours brennerlaufzeit("Brennerlaufzeit", "boiler", 0x0886);
 DPMode brennerstoerung("Brennerstörung", "boiler", 0x0883);
 DPCount brennerstarts("Brennerstarts", "boiler", 0x088A);
-DPCountS brennerstatus("Brennerstatus", "boiler", 0xA38F);
 DPPercent brennerleistung("Brennerleistung", "boiler", 0xA38F);
 DPMode flamme("Flamme", "boiler", 0x55D3);
-DPMode flowswitch("Flowswitch", "boiler", 0x0883);
 DPMode umschaltventil("Umschaltventil", "boiler", 0x0A10);
 DPMode umwaelzpumpe("Umwälzpumpe", "boiler", 0x7660);
+DPMode umwaelzpumpeDrehzahl("UmwälzpumpeDrehzahl", "boiler", 0x0A3C);
 DPMode heizkreispumpe("Heizkreispumpe", "boiler", 0x3906);
+DPMode heizkreispumpeDrehzahl("HeizkreispumpeDrehzahl", "boiler", 0x0A3B);
 DPMode stoerung("Störung", "boiler", 0x0A82);
+
 DPRaw stoerungsmeldung1("Stoerungsmeldung1", "boiler", 0x7507);
 DPRaw stoerungsmeldung2("Stoerungsmeldung2", "boiler", 0x7510);
 DPRaw stoerungsmeldung3("Stoerungsmeldung3", "boiler", 0x7519);
