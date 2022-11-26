@@ -31,10 +31,10 @@ class OptolinkKW {
  public:
   OptolinkKW();
 #ifdef ARDUINO_ARCH_ESP32
-  void begin(HardwareSerial* serial, int8_t rxPin, int8_t txPin);
+  void begin(SoftwareSerial* serial, int8_t rxPin, int8_t txPin);
 #endif
 #ifdef ESP8266
-  void begin(HardwareSerial* serial);
+  void begin(SoftwareSerial* serial);
 #endif
   void loop();
   const int8_t available() const;
