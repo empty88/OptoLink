@@ -41,15 +41,15 @@ OptolinkKW::OptolinkKW() :
     _printer(nullptr) {}
 
 #ifdef ARDUINO_ARCH_ESP32
-void OptolinkKW::begin(HardwareSerial* serial, int8_t rxPin, int8_t txPin) {
+void OptolinkKW::begin(SoftwareSerial* serial, int8_t rxPin, int8_t txPin) {
   serial->begin(4800, SERIAL_8E2, rxPin, txPin);
   _stream = serial;
   // serial->flush();
 }
 #endif
 #ifdef ESP8266
-void OptolinkKW::begin(HardwareSerial* serial) {
-  serial->begin(4800, SERIAL_8E2);
+void OptolinkKW::begin(SoftwareSerial* serial) {
+  //serial->begin(4800, SERIAL_8E2);
   _stream = serial;
   // serial->flush();
 }

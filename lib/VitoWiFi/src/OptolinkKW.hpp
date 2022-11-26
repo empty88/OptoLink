@@ -26,6 +26,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #pragma once
 #include <Arduino.h>
 #include "Constants.hpp"
+#include <SoftwareSerial.h>
 
 class OptolinkKW {
  public:
