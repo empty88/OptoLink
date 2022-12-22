@@ -5,15 +5,22 @@
 #include <ESP8266mDNS.h>
 
 #include "mqtt.h"
-#include "Logging.h"
-#include "WebServer.h"
+#include "logging.h"
+#include "webServer.h"
 #include "viessmann.h"
-
-const char* WIFI_SSID = "***";
-const char* WIFI_PW = "***";
-const int LED_PIN = LED_BUILTIN;
+#include "config.h"
+#include "ntpclient.h"
 
 Timer t;
+
+const int LED_PIN = LED_BUILTIN;
+
+const IPAddress _STA_ip = IPAddress(192,168,0,1);
+const IPAddress _STA_gw = IPAddress(192,168,0,1);
+const IPAddress _STA_sn = IPAddress(255,255,255,0);
+const char _STA_ssid[] = "optolink_config";
+
+bool configMode = false;
 
 void wifiSerialLoop();
 void setupArduinoOta();
@@ -24,46 +31,75 @@ void setup() {
 	Serial.begin(4800);
 	pinMode(LED_PIN, OUTPUT);
 
-  	setupWiFi();
+	readConfig();
 
-	setupArduinoOta();
-  
-  	setupMqtt();
-  	t.every(10000,checkMqtt);
+	if (GLOBAL::WlanSSID == "" | GLOBAL::WlanPasswd == "" | GLOBAL::MqttTopicPrefix == "" | GLOBAL::MqttBrokerIP == "" | GLOBAL::MqttClientId == ""){ // start access point and web server in config mode
+		Log("Start WLAN AP");
+		WiFi.mode(WIFI_AP);
+		WiFi.hostname("optolink_config");
+  		WiFi.softAPConfig(_STA_ip, _STA_gw, _STA_sn);
+  		WiFi.softAP(_STA_ssid);
+		StartWebServer(true);
+		configMode = true;
+	} else {
+  		setupWiFi();
 
-	IPAddress HTTPS_ServerIP = WiFi.localIP();
-	Log("Server IP is: " + HTTPS_ServerIP.toString());
+		setupArduinoOta();
 
-	StartWebServer();
-  	swSer.begin(4800, SWSERIAL_8E2, D2, D1);
+		// get time per hour(), minute(), second(), now() functions
+ 		if (GLOBAL::NtpServerIP == "") {
+			setTimeServer(WiFi.gatewayIP());
+		} else {
+			IPAddress ip;
+			ip.fromString(GLOBAL::NtpServerIP);
+			setTimeServer(ip);
+		}
 
-  	setupVito();
+		updateTime();
+		t.every(43200000, updateTime); 	// ntp update every 12 hours
+	 
+		setupMqtt(GLOBAL::MqttBrokerIP, GLOBAL::MqttClientId, GLOBAL::MqttTopicPrefix);
+		t.every(10000,checkMqtt);		// check if mqtt is still connected, reconnect if needed
 
-  	t.every(10000,getValues);
-  	getVitoData();
+		StartWebServer();
+		swSer.begin(4800, SWSERIAL_8E2, D2, D1);
+
+		setupVito();
+
+		t.every(10000, getValues);		// request datapoints every 10 secs
+		getVitoData();
+
+		IPAddress HTTPS_ServerIP = WiFi.localIP();
+		Log("Server IP is: " + HTTPS_ServerIP.toString());
+	}
 }
 
 void loop() {
 	WebServer.handleClient();
-	ArduinoOTA.handle();
-  	mqttClient.loop();
-  	if (missingValuesCount < 2) VitoWiFi.loop();
+	if (!configMode) {
+		ArduinoOTA.handle();
+		mqttClient.loop();
+		if (missingValuesCount < 2) VitoWiFi.loop();
+	}
   	t.update();
+	delay(10);
 }
 
 void getValues() {
-  	Log("getvalues()");
+  	//Log("getvalues()");
 	missingValuesCount++;
 	if (missingValuesCount > 1) {
-		digitalWrite(LED_PIN, LOW);		// LED an wenn Datenabruf übersprungen wird
-		if (missingValuesCount == 7) {	// nach 6 Fehlversuchen erneuter Versuch
+		digitalWrite(LED_PIN, LOW);		// LED on while skipping data requests
+		if (missingValuesCount == 7) {	// retry after 6 loops (10 secs per loop = 60 secs)
  			missingValuesCount = 0;
+		} else if(missingValuesCount == 2) {
+			publishMqtt("error", "1");	// send error status over mqtt once
 		} else {
 			Log("Skipping...");
 			return;
 		}
 	}
-	digitalWrite(LED_PIN, LOW);			// LED Signal bei Datenabruf
+	digitalWrite(LED_PIN, LOW);			// short LED signal on data request
 	delay(200);
 	digitalWrite(LED_PIN, HIGH);
   	getVitoData();
@@ -72,17 +108,27 @@ void getValues() {
 void setupWiFi() {
 	Log("Connecting to WLAN");
 	WiFi.mode(WIFI_STA);
+	wifi_set_sleep_type(NONE_SLEEP_T);
+	WiFi.setAutoReconnect(true);
 	WiFi.hostname("OptoLink");
-	WiFi.begin(WIFI_SSID, WIFI_PW);
+	WiFi.begin(GLOBAL::WlanSSID, GLOBAL::WlanPasswd);
 
-	while (WiFi.status() != WL_CONNECTED) {
+	int attempts = 0;
+	while (WiFi.status() != WL_CONNECTED && attempts < 200) {
 		digitalWrite(LED_PIN, LOW);
 		delay(200);
 		digitalWrite(LED_PIN, HIGH);
 		delay(200);
 		Serial.print(".");
+		attempts++;
 	}
 	Serial.println();
+	if (WiFi.status() != WL_CONNECTED) {
+		GLOBAL::WlanPasswd = "";
+		GLOBAL::WlanSSID = "";
+		saveConfig();
+		ESP.restart();
+	}
 }
 
 void setupArduinoOta() {

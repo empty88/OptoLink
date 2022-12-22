@@ -92,7 +92,8 @@ void setupVito() {
 
 void tempCallbackHandler(const IDatapoint& dp, DPValue value) {
     publishMqtt(dp.getName(),(char*)String(value.getFloat()).c_str());
-    missingValuesCount = 0;
+    missingValuesCount = 0;             // reset error count on response
+    publishMqtt("error", "0");          // reset error status over mqtt
 }
 
 void globalCallbackHandler(const IDatapoint& dp, DPValue value) {
@@ -111,7 +112,7 @@ void stoerungsmeldungCallbackHandler(const IDatapoint& dp, DPValue value) {
     uint8_t errorCode = strtol(dpString.substring(0,2).c_str(), 0, 16);
 
     String errorMessage = getErrorMessage(errorCode);
-    Log(String(dp.getName()) + " " + errorMessage);
+    if (errorCode != 0) Log(String(dp.getName()) + " " + errorMessage);
     
     publishMqtt(dp.getName(), (timeString + "#" + errorMessage + "#" + dpString.substring(0,2)).c_str() );
 }

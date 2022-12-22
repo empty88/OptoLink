@@ -5,8 +5,6 @@
 
 extern PubSubClient mqttClient;
 
-const String topic_prefix = "optolink/";
-
-void setupMqtt();
+void setupMqtt(String server, String clientid, String prefix);
 void publishMqtt(String topic, const char* payload);
 void checkMqtt();
