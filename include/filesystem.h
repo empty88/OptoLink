@@ -5,6 +5,9 @@ void readConfig();
 void resetConfig();
 void saveConfig();
 
+String readLastError();
+void saveLastError(String lastError);
+
 struct GLOBAL {
 	static String WlanSSID;
 	static String WlanPasswd;

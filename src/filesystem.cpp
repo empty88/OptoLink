@@ -1,4 +1,4 @@
-#include "config.h"
+#include "filesystem.h"
 #include <LittleFS.h>
 #include "Logging.h"
 
@@ -56,6 +56,22 @@ void resetConfig() {
 	configFile.println("optolink/"); // MQTT topic prefix
 	configFile.println(""); // MQTT server
 	configFile.println("optolink"); // MQTT client Id
+	configFile.close();
+}
+
+String readLastError() {
+	Log("Read last error");
+	File configFile = LittleFS.open("_lastError", "r");
+	configFile.seek(0);
+	String result = configFile.readString();
+	configFile.close();
+	return result;
+}
+
+void saveLastError(String lastError) {
+	Log("Write last error");
+	File configFile = LittleFS.open("_lastError", "w");
+	configFile.print(lastError);
 	configFile.close();
 }
 

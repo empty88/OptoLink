@@ -2,6 +2,7 @@
 #include <VitoWiFi.h>
 #include "mqtt.h"
 #include "Arduino.h"
+#include "filesystem.h"
 
 VitoWiFi_setProtocol(P300);
 SoftwareSerial swSer;
@@ -39,18 +40,20 @@ DPMode umwaelzpumpe("Umwälzpumpe", "boiler", 0x7660);
 DPMode umwaelzpumpeDrehzahl("UmwälzpumpeDrehzahl", "boiler", 0x0A3C);
 DPMode heizkreispumpe("Heizkreispumpe", "boiler", 0x3906);
 DPMode heizkreispumpeDrehzahl("HeizkreispumpeDrehzahl", "boiler", 0x0A3B);
-DPMode stoerung("Störung", "boiler", 0x0A82);
+//DPMode stoerung("Störung", "boiler", 0x0847);                             // Datapoint is not set to 1 when error occurs
 
-DPRaw stoerungsmeldung1("Stoerungsmeldung1", "boiler", 0x7507);
-DPRaw stoerungsmeldung2("Stoerungsmeldung2", "boiler", 0x7510);
-DPRaw stoerungsmeldung3("Stoerungsmeldung3", "boiler", 0x7519);
-DPRaw stoerungsmeldung4("Stoerungsmeldung4", "boiler", 0x7522);
-DPRaw stoerungsmeldung5("Stoerungsmeldung5", "boiler", 0x752B);
-DPRaw stoerungsmeldung6("Stoerungsmeldung6", "boiler", 0x7534);
-DPRaw stoerungsmeldung7("Stoerungsmeldung7", "boiler", 0x753D);
-DPRaw stoerungsmeldung8("Stoerungsmeldung8", "boiler", 0x7546);
-DPRaw stoerungsmeldung9("Stoerungsmeldung9", "boiler", 0x754F);
-DPRaw stoerungsmeldung10("Stoerungsmeldung10", "boiler", 0x7558);
+DPRaw stoerungsmeldung1("Störungsmeldung1", "boiler", 0x7507);
+DPRaw stoerungsmeldung2("Störungsmeldung2", "boiler", 0x7510);
+DPRaw stoerungsmeldung3("Störungsmeldung3", "boiler", 0x7519);
+DPRaw stoerungsmeldung4("Störungsmeldung4", "boiler", 0x7522);
+DPRaw stoerungsmeldung5("Störungsmeldung5", "boiler", 0x752B);
+DPRaw stoerungsmeldung6("Störungsmeldung6", "boiler", 0x7534);
+DPRaw stoerungsmeldung7("Störungsmeldung7", "boiler", 0x753D);
+DPRaw stoerungsmeldung8("Störungsmeldung8", "boiler", 0x7546);
+DPRaw stoerungsmeldung9("Störungsmeldung9", "boiler", 0x754F);
+DPRaw stoerungsmeldung10("Störungsmeldung10", "boiler", 0x7558);
+
+String lastError = "";
 
 const uint8_t resetBytes[] = {0x04};
 const uint8_t initBytes[] = {0x16, 0x00, 0x00};
@@ -88,6 +91,8 @@ void setupVito() {
     stoerungsmeldung8.setLength(9);
     stoerungsmeldung9.setLength(9);
     stoerungsmeldung10.setLength(9);
+
+    lastError = readLastError();
 }
 
 void tempCallbackHandler(const IDatapoint& dp, DPValue value) {
@@ -109,13 +114,24 @@ void stoerungsmeldungCallbackHandler(const IDatapoint& dp, DPValue value) {
     String dpString = String(dpBuffer);
     // 0-1: Error Code, 2-5 yyyy, 6-7 MM, 8-9 dd, 10-11 weekday (01-07), 12-13 HH, 14-15 mm, 16-17 ss
     String timeString = dpString.substring(8,10) + "." + dpString.substring(6,8) + "." + dpString.substring(4,6) + " " + dpString.substring(12,14) + ":" + dpString.substring(14,16) + ":" + dpString.substring(16,18) + " Uhr";
-
     uint8_t errorCode = strtol(dpString.substring(0,2).c_str(), 0, 16);
+    String errorMessage = getErrorMessage(errorCode);       // resolve error code to error message
 
-    String errorMessage = getErrorMessage(errorCode);
-    if (errorCode != 0) Log(String(dp.getName()) + " " + errorMessage);
-    
     publishMqtt(dp.getName(), (timeString + "#" + errorMessage + "#" + dpString.substring(0,2)).c_str() );
+
+    if(dp.getName() == "Störungsmeldung1") {
+        String errorIdentifier = timeString + "#" + errorCode;      // create unique string to compare errors
+
+        if (lastError != "" && lastError != errorIdentifier && errorCode != 0) {
+            publishMqtt("Störung","1");     // send error impulse once cause we are not able to determine the end of the error
+            Log("Device in error state");
+        }
+        if(lastError == "" || lastError != errorIdentifier) {
+            saveLastError(errorIdentifier);    // initially write error to filesystem and update on change
+            lastError = errorIdentifier;
+        }
+    }
+    publishMqtt("Störung","0"); 
 }
 
 void getVitoData() {

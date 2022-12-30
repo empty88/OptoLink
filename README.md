@@ -24,6 +24,8 @@ Fehlercodes werden in Fehlermeldungen übersetzt.
 
  - Die Einstellungen werden im Flash-Speicher persistent gespeichert.
 
+ - Benachrichtigung bei Störung
+
  - Logeinträge im Webinterface mit Datum und Uhrzeit, da NTP Integration
 
  - Falls keine Daten über die Infrarotschnittstelle gelesen werden können, sendet das Modul optolink/error = 1 (bei Standard Topic Prefix) über MQTT, wartet eine Minute und versucht es erneut.
