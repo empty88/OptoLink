@@ -107,7 +107,8 @@ void stoerungsmeldungCallbackHandler(const IDatapoint& dp, DPValue value) {
     value.getString(dpBuffer,128);
 
     String dpString = String(dpBuffer);
-    String timeString = dpString.substring(8,10) + "." + dpString.substring(6,8) + "." + dpString.substring(4,6) + " " + dpString.substring(10,12) + ":" + dpString.substring(12,14) + ":" + dpString.substring(14,16) + " Uhr";
+    // 0-1: Error Code, 2-5 yyyy, 6-7 MM, 8-9 dd, 10-11 weekday (01-07), 12-13 HH, 14-15 mm, 16-17 ss
+    String timeString = dpString.substring(8,10) + "." + dpString.substring(6,8) + "." + dpString.substring(4,6) + " " + dpString.substring(12,14) + ":" + dpString.substring(14,16) + ":" + dpString.substring(16,18) + " Uhr";
 
     uint8_t errorCode = strtol(dpString.substring(0,2).c_str(), 0, 16);
 
