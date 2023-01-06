@@ -80,7 +80,7 @@ void HandleSetConfigMode() {
 	String mqttsvr = WebServer.arg("mqttsvr");
 	String mqttclientid = WebServer.arg("mqttclientid");
 	if (!mqtttopicprefix.endsWith("/")) mqtttopicprefix += "/";
-	if (ssid == "" | passwd == "" | mqtttopicprefix == "" | mqttsvr == "" | mqttclientid == ""){
+	if ((ssid == "") | (passwd == "") | (mqtttopicprefix == "") | (mqttsvr == "") | (mqttclientid == "")){
 		offmessage = "Daten unvollständig";
 		WebServer.sendHeader("Location", String("/"), true);
 		WebServer.send(302, "text/plain", "");
@@ -102,7 +102,7 @@ void HandleSetConfig() {
 	String mqttsvr = WebServer.arg("mqttsvr");
 	String mqttclientid = WebServer.arg("mqttclientid");
 	if (!mqtttopicprefix.endsWith("/")) mqtttopicprefix += "/";
-	if (mqtttopicprefix == "" | mqttsvr == "" | mqttclientid == ""){
+	if ((mqtttopicprefix == "") | (mqttsvr == "") | (mqttclientid == "")){
 		offmessage = "Daten unvollständig";
 		WebServer.sendHeader("Location", String("/config"), true);
 		WebServer.send(302, "text/plain", "");

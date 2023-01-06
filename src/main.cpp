@@ -33,7 +33,7 @@ void setup() {
 
 	readConfig();
 
-	if (GLOBAL::WlanSSID == "" | GLOBAL::WlanPasswd == "" | GLOBAL::MqttTopicPrefix == "" | GLOBAL::MqttBrokerIP == "" | GLOBAL::MqttClientId == ""){ // start access point and web server in config mode
+	if ((GLOBAL::WlanSSID == "") | (GLOBAL::WlanPasswd == "") | (GLOBAL::MqttTopicPrefix == "") | (GLOBAL::MqttBrokerIP == "") | (GLOBAL::MqttClientId == "")){ // start access point and web server in config mode
 		Log("Start WLAN AP");
 		WiFi.mode(WIFI_AP);
 		WiFi.hostname("optolink_config");
