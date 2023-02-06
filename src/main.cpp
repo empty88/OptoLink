@@ -33,7 +33,7 @@ void setup() {
 
 	readConfig();
 
-	if (GLOBAL::WlanSSID == "" | GLOBAL::WlanPasswd == "" | GLOBAL::MqttTopicPrefix == "" | GLOBAL::MqttBrokerIP == "" | GLOBAL::MqttClientId == ""){ // start access point and web server in config mode
+	if ((GLOBAL::WlanSSID == "") | (GLOBAL::WlanPasswd == "")){ // start access point and web server in config mode
 		Log("Start WLAN AP");
 		WiFi.mode(WIFI_AP);
 		WiFi.hostname("optolink_config");
@@ -58,8 +58,13 @@ void setup() {
 		updateTime();
 		t.every(43200000, updateTime); 	// ntp update every 12 hours
 	 
-		setupMqtt(GLOBAL::MqttBrokerIP, GLOBAL::MqttClientId, GLOBAL::MqttTopicPrefix);
-		t.every(10000,checkMqtt);		// check if mqtt is still connected, reconnect if needed
+	 	if ((GLOBAL::MqttBrokerIP != "") && (GLOBAL::MqttClientId != "") && (GLOBAL::MqttTopicPrefix != "")) {
+			setupMqtt(GLOBAL::MqttBrokerIP, GLOBAL::MqttClientId, GLOBAL::MqttTopicPrefix);
+			t.every(10000,checkMqtt);		// check if mqtt is still connected, reconnect if needed
+			Log("MQTT started");
+		} else {
+			Log("MQTT configuration broken, MQTT is disabled");
+		}
 
 		StartWebServer();
 		swSer.begin(4800, SWSERIAL_8E2, D2, D1);

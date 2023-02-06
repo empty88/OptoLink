@@ -50,12 +50,12 @@ void saveConfig() {
 void resetConfig() {
 	Log("Create default settings");
 	File configFile = LittleFS.open("_configFile", "w");
-	configFile.println(""); // WLAN SSID
-	configFile.println(""); // WLAN password
-	configFile.println(""); // NTP server
-	configFile.println("optolink/"); // MQTT topic prefix
-	configFile.println(""); // MQTT server
-	configFile.println("optolink"); // MQTT client Id
+	configFile.println(""); 					// WLAN SSID
+	configFile.println(""); 					// WLAN password
+	configFile.println(""); 					// NTP server
+	configFile.println("optolink/"); 			// MQTT topic prefix
+	configFile.println(""); 					// MQTT server
+	configFile.println("optolink"); 			// MQTT client Id
 	configFile.close();
 }
 

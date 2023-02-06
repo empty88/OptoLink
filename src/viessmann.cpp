@@ -8,39 +8,39 @@ VitoWiFi_setProtocol(P300);
 SoftwareSerial swSer;
 
 byte missingValuesCount = 0;
+std::vector<LiveData> liveData;
 
-DPTemp aussenTemp("AußenTemp", "boiler", 0x0800);
-DPHours betriebsstunden("Betriebsstunden", "boiler", 0x6568);
-DPTemp abgasTemp("AbgasTemp", "boiler", 0x0808);
-DPTemp ladespeicherObenTemp("LadespeicherObenTemp", "boiler", 0x0812);
-DPTemp ladespeicherUntenTemp("LadespeicherUntenTemp", "boiler", 0x0814);
-DPTemp kesselIstTemp("KesselIstTemp", "boiler", 0x0802);
-DPTemp kesselSollTemp("KesselSollTemp", "boiler", 0x555A);
-DPTemp warmwasserSollTemp("WarmwasserSollTemp", "boiler", 0x6300);
-DPTemp warmwasserIstTemp("WarmwasserIstTemp", "boiler", 0x0804);
-DPTemp vorlaufSollTemp("VorlaufSollTemp", "boiler", 0x3544);
-DPTemp vorlaufIstTemp("VorlaufIstTemp", "boiler", 0x3900);
-DPTemp kollektorTemp("KollektorTemp", "boiler", 0x6564);
-DPTemp solarspeicherTemp("SolarspeicherTemp", "boiler", 0x6566);
-DPMode nachladeunterdrueckung("Nachladeunterdrückung", "boiler", 0x6551);
-DPMode solarpumpe("Solarpumpe", "boiler", 0x6552);
-DPCount waermemenge("Wärmemenge", "boiler", 0x6560);
-DPCount solartagesertrag("Solartagesertrag", "boiler", 0xCF30);
-DPMode solarinfo("Solarinfo", "boiler", 0x7754);
-DPMode speicherladepumpe("Speicherladepumpe", "boiler", 0x6513);
-DPMode betriebsart("Betriebsart", "boiler", 0x3323);
-DPMode sparbetrieb("Sparbetrieb", "boiler", 0x3302);
-DPHours brennerlaufzeit("Brennerlaufzeit", "boiler", 0x0886);
-DPMode brennerstoerung("Brennerstörung", "boiler", 0x0883);
-DPCount brennerstarts("Brennerstarts", "boiler", 0x088A);
-DPPercent brennerleistung("Brennerleistung", "boiler", 0xA38F);
-DPMode flamme("Flamme", "boiler", 0x55D3);
-DPMode umschaltventil("Umschaltventil", "boiler", 0x0A10);
-DPMode umwaelzpumpe("Umwälzpumpe", "boiler", 0x7660);
-DPMode umwaelzpumpeDrehzahl("UmwälzpumpeDrehzahl", "boiler", 0x0A3C);
-DPMode heizkreispumpe("Heizkreispumpe", "boiler", 0x3906);
-DPMode heizkreispumpeDrehzahl("HeizkreispumpeDrehzahl", "boiler", 0x0A3B);
-//DPMode stoerung("Störung", "boiler", 0x0847);                             // Datapoint is not set to 1 when error occurs
+//second parameter "group" is misused for the unit
+DPTemp aussenTemp("AußenTemp", " °C", 0x0800);
+DPHours betriebsstunden("Betriebsstunden", " Std.", 0x6568);
+DPTemp abgasTemp("AbgasTemp", " °C", 0x0808);
+DPTemp ladespeicherObenTemp("LadespeicherObenTemp", " °C", 0x0812);
+DPTemp ladespeicherUntenTemp("LadespeicherUntenTemp", " °C", 0x0814);
+DPTemp kesselIstTemp("KesselIstTemp", " °C", 0x0802);
+DPTemp kesselSollTemp("KesselSollTemp", " °C", 0x555A);
+DPTemp warmwasserSollTemp("WarmwasserSollTemp", " °C", 0x6300);
+DPTemp warmwasserIstTemp("WarmwasserIstTemp", " °C", 0x0804);
+DPTemp vorlaufSollTemp("VorlaufSollTemp", " °C", 0x3544);
+DPTemp vorlaufIstTemp("VorlaufIstTemp", " °C", 0x3900);
+DPTemp kollektorTemp("KollektorTemp", " °C", 0x6564);
+DPTemp solarspeicherTemp("SolarspeicherTemp", " °C", 0x6566);
+DPMode nachladeunterdrueckung("Nachladeunterdrückung", "", 0x6551);
+DPMode solarpumpe("Solarpumpe", "", 0x6552);
+DPCount waermemenge("Wärmemenge", " kWh", 0x6560);
+DPCount solartagesertrag("Solartagesertrag", " Wh", 0xCF30);
+DPMode solarinfo("Solarinfo", "", 0x7754);
+DPMode speicherladepumpe("Speicherladepumpe", "", 0x6513);
+DPMode betriebsart("Betriebsart", "", 0x3323);
+DPMode sparbetrieb("Sparbetrieb", "", 0x3302);
+DPHours brennerlaufzeit("Brennerlaufzeit", " Std.", 0x0886);
+DPMode brennerstoerung("Brennerstörung", "", 0x0883);
+DPCount brennerstarts("Brennerstarts", "", 0x088A);
+DPMode flamme("Flamme", " %", 0x55D3);
+DPMode umschaltventil("Umschaltventil", "", 0x0A10);
+DPMode umwaelzpumpe("Umwälzpumpe", "", 0x7660);
+DPMode umwaelzpumpeDrehzahl("UmwälzpumpeDrehzahl", " %", 0x0A3C);
+DPMode heizkreispumpe("Heizkreispumpe", "", 0x3906);
+//Notice: no working error datapoint found
 
 DPRaw stoerungsmeldung1("Störungsmeldung1", "boiler", 0x7507);
 DPRaw stoerungsmeldung2("Störungsmeldung2", "boiler", 0x7510);
@@ -62,15 +62,11 @@ const uint8_t startBytes[] = {0x41, 0x05, 0x00, 0x01};
 void tempCallbackHandler(const IDatapoint& dp, DPValue value);
 void globalCallbackHandler(const IDatapoint& dp, DPValue value);
 void stoerungsmeldungCallbackHandler(const IDatapoint& dp, DPValue value);
+void addValueToLiveData(const IDatapoint& dp, String value);
 
 void setupVito() {
     VitoWiFi.setup(&swSer);
     VitoWiFi.setGlobalCallback(&globalCallbackHandler);
-    aussenTemp.setCallback(&tempCallbackHandler);
-    abgasTemp.setCallback(&tempCallbackHandler);
-    ladespeicherObenTemp.setCallback(&tempCallbackHandler);
-    ladespeicherUntenTemp.setCallback(&tempCallbackHandler);
-    aussenTemp.setCallback(&tempCallbackHandler);
     stoerungsmeldung1.setCallback(&stoerungsmeldungCallbackHandler);
     stoerungsmeldung2.setCallback(&stoerungsmeldungCallbackHandler);
     stoerungsmeldung3.setCallback(&stoerungsmeldungCallbackHandler);
@@ -81,7 +77,7 @@ void setupVito() {
     stoerungsmeldung8.setCallback(&stoerungsmeldungCallbackHandler);
     stoerungsmeldung9.setCallback(&stoerungsmeldungCallbackHandler);
     stoerungsmeldung10.setCallback(&stoerungsmeldungCallbackHandler);
-    stoerungsmeldung1.setLength(9);
+    stoerungsmeldung1.setLength(9);     //just read the first 9 bytes
     stoerungsmeldung2.setLength(9);
     stoerungsmeldung3.setLength(9);
     stoerungsmeldung4.setLength(9);
@@ -92,19 +88,23 @@ void setupVito() {
     stoerungsmeldung9.setLength(9);
     stoerungsmeldung10.setLength(9);
 
+    for (auto it = IDatapoint::getCollection().begin(); it != IDatapoint::getCollection().end(); ++it) {
+        LiveData data = {(*it), ""};
+        liveData.push_back(data);       // fill the vector with all registered datapoints in the form of LiveData struct
+    }
+
     lastError = readLastError();
 }
 
-void tempCallbackHandler(const IDatapoint& dp, DPValue value) {
-    publishMqtt(dp.getName(),(char*)String(value.getFloat()).c_str());
+void globalCallbackHandler(const IDatapoint& dp, DPValue value) {
     missingValuesCount = 0;             // reset error count on response
     publishMqtt("error", "0");          // reset error status over mqtt
-}
 
-void globalCallbackHandler(const IDatapoint& dp, DPValue value) {
-  char value_str[15] = {0};
-  value.getString(value_str, sizeof(value_str));
-  publishMqtt(dp.getName(),value_str);
+    char value_str[15] = {0};
+    value.getString(value_str, sizeof(value_str));
+    publishMqtt(dp.getName(),value_str);
+    strcat(value_str, dp.getGroup());   // add unit for web display
+    addValueToLiveData(dp, value_str);
 }
 
 void stoerungsmeldungCallbackHandler(const IDatapoint& dp, DPValue value) {
@@ -338,4 +338,13 @@ String getErrorMessage(uint8_t errorCode) {
         default:
             return "Unbekannter Fehler";
     }
+}    
+
+void addValueToLiveData(const IDatapoint& dp, String value) {
+    for (auto it = liveData.begin(); it != liveData.end(); ++it) {
+        if (dp.getName() == (*it).dp->getName()) {
+            (*it).value = value;
+        }
+    }
+
 }

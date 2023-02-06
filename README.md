@@ -1,7 +1,8 @@
 # Optolink
 
-Dieses Projekt liest von einer Viessmann Vitodens 200-W mit Vitotronic 200 VScotHO1 (2019) einige Daten aus und sendet diese an einen MQTT Broker.
+Dieses Projekt liest von einer Viessmann Vitodens 200-W mit Vitotronic 200 VScotHO1 (2019) einige Daten aus und sendet diese bei Bedarf an einen MQTT Broker.
 Fehlercodes werden in Fehlermeldungen übersetzt.
+Die Datenpunkte werden automatisch im Webinterface mit dem aktuellen Wert angezeigt. Aktuelle Werte werden per AJAX nachgeladen.
 
 [Projektdetails auf meinem Blog](https://blog.mt88.eu/2022/10/27/viessmann-heizungsdaten-2-0/)
 
@@ -12,7 +13,7 @@ Fehlercodes werden in Fehlermeldungen übersetzt.
  - 192.168.0.1 im Browser aufrufen
  - WLAN-Zugangsdaten eingeben
  - NTP-Server IP eingeben (optional)
- - MQTT-Broker IP eingeben
+ - MQTT-Broker IP eingeben (optional)
  - MQTT Topic Prefix anpassen (optional)
  - MQTT Client Id anpassen (optional)
 
@@ -32,3 +33,5 @@ Fehlercodes werden in Fehlermeldungen übersetzt.
 Durch dieses Verhalten wird auch sichergestellt, dass die Heizung nach einem Stromausfall wieder startet. Beim Start der Heizung dürfen keine Infrarotsignale gesendet werden, da die Heizung sonst in einer Start-Schleife hängen bleibt.
 
  - Das Modul lässt sich im Nachgang über WLAN(OTA) flashen.
+
+ - Werte der Datenpunkte werden im Webinterface übersichtlich dargestellt (responsives Design) mit automatischer Aktualisierung (AJAX)

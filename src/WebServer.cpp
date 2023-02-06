@@ -7,8 +7,8 @@
 
 ESP8266WebServer WebServer(80);
 
-String onmessage = "&nbsp;";
-String offmessage = "&nbsp;";
+String onmessage = "";
+String offmessage = "";
 
 void StartWebServer() {
 	StartWebServer(false);
@@ -27,6 +27,7 @@ void StartWebServer(bool configMode) {
 		WebServer.on("/Logs", HandleLogs);
 		WebServer.on("/getLogs", HandleGetLogs);
 		WebServer.on("/getTime", HandleGetTime);
+		WebServer.on("/getValues", HandleGetValues);
 		WebServer.on("/restart", HandleRestart);
 	}
 	WebServer.begin();
@@ -34,27 +35,43 @@ void StartWebServer(bool configMode) {
 
 void ShowPage(String content, String script, String style) {
 	String page = FPSTR(HTTP_HEADER);
-	page += script;
-	page += FPSTR(HTTP_SCRIPT_END);
-	page += style;
-	page += FPSTR(HTTP_CONTAINER);
+	page.concat(script);
+	page.concat(FPSTR(HTTP_SCRIPT_END));
+	page.concat(style);
+	page.concat(FPSTR(HTTP_CONTAINER));
 
 	// replacements
 	content.replace("{menu}", FPSTR(HTTP_MENU));
 	content.replace("{onmessage}", onmessage);
 	content.replace("{offmessage}", offmessage);
 	content.replace("{color}", "#FF0000");
-	onmessage = "&nbsp;";
-	offmessage = "&nbsp;";
-	page += content;
-	page += FPSTR(HTTP_END);
+	onmessage = "";
+	offmessage = "";
+	page.concat(content);
+	page.concat(FPSTR(HTTP_END));
+
 	WebServer.send(200, "text/html", page);
 }
 
 void HandleRoot() {
-	Serial1.println("HandleRoot");
+	Serial.println("HandleRoot");
 	String content = FPSTR(HTTP_MAIN);
-	content += "{menu}";
+	content.concat("{menu}");
+	
+	//automatically generate livedata from livedata vector
+	content.concat("<div class=\"livedata\">");
+	for (auto it = liveData.begin(); it != liveData.end(); ++it) {
+		if (String((*it).value) == "") continue;
+		String dpName = String((*it).dp->getName());
+		content.concat("<div class=\"item\"><div class=\"name\">");
+		content.concat(dpName);
+		content.concat(": </div><div id=\"");
+		content.concat(dpName);
+		content.concat("\" class=\"value\">");
+		content.concat(String((*it).value));
+		content.concat("</div></div>");
+    }
+	content.concat("</div>");
 
 	ShowPage(content, FPSTR(HTTP_MAIN_SCRIPT), FPSTR(HTTP_STYLE));
 }
@@ -79,10 +96,10 @@ void HandleSetConfigMode() {
 	String mqtttopicprefix = WebServer.arg("mqtttopicprefix");
 	String mqttsvr = WebServer.arg("mqttsvr");
 	String mqttclientid = WebServer.arg("mqttclientid");
-	if (!mqtttopicprefix.endsWith("/")) mqtttopicprefix += "/";
-	if (ssid == "" | passwd == "" | mqtttopicprefix == "" | mqttsvr == "" | mqttclientid == ""){
-		offmessage = "Daten unvollständig";
-		WebServer.sendHeader("Location", String("/"), true);
+	if (!mqtttopicprefix.endsWith("/")) mqtttopicprefix.concat("/");
+	if ((ssid == "") | (passwd == "") | (mqtttopicprefix == "") | (mqttclientid == "")){
+		offmessage = "Data incomplete";
+		WebServer.sendHeader("Location", "/", true);
 		WebServer.send(302, "text/plain", "");
 		return;
 	}
@@ -101,9 +118,9 @@ void HandleSetConfig() {
 	String mqtttopicprefix = WebServer.arg("mqtttopicprefix");
 	String mqttsvr = WebServer.arg("mqttsvr");
 	String mqttclientid = WebServer.arg("mqttclientid");
-	if (!mqtttopicprefix.endsWith("/")) mqtttopicprefix += "/";
-	if (mqtttopicprefix == "" | mqttsvr == "" | mqttclientid == ""){
-		offmessage = "Daten unvollständig";
+	if (!mqtttopicprefix.endsWith("/")) mqtttopicprefix.concat("/");
+	if ((mqtttopicprefix == "") | (mqttclientid == "")){
+		offmessage = "Data incomplete";
 		WebServer.sendHeader("Location", String("/config"), true);
 		WebServer.send(302, "text/plain", "");
 		return;
@@ -119,7 +136,7 @@ void HandleSetConfig() {
 void HandleLogs() {
 	Serial.println("HandleLogs");
 	String content = "<textarea readonly id=\"logs\" cols=\"45\" wrap=\"off\"></textarea>";
-	content += FPSTR(HTTP_MENU_BACK);
+	content.concat(FPSTR(HTTP_MENU_BACK));
 
 	ShowPage(content, FPSTR(HTTP_LOGS_SCRIPT), FPSTR(HTTP_STYLE));
 }
@@ -133,13 +150,13 @@ void HandleConfig() {
 	content.replace("{mqttserver}", GLOBAL::MqttBrokerIP);
 	content.replace("{mqtttopicprefix}", GLOBAL::MqttTopicPrefix);
 	content.replace("{mqttclientid}", GLOBAL::MqttClientId);
-	content += FPSTR(HTTP_MENU_BACK);
+	content.concat(FPSTR(HTTP_MENU_BACK));
 
 	ShowPage(content, FPSTR(HTTP_MAIN_SCRIPT), FPSTR(HTTP_STYLE));
 }
 
 void HandleGetTime() {
-	char timestr[19];
+	char timestr[21];
 	int int_hour = hour();
 	if (summertime_EU(year(), month(), day(), hour(), 1)) {
 		if (int_hour == 24) {
@@ -157,8 +174,8 @@ void HandleGetTime() {
 void HandleRestart() {
 	Log("HandleRestart");
 
-	onmessage = "Restart wird ausgeführt!";
-	WebServer.sendHeader("Location", String("/"), true);
+	onmessage = "Optolink will be restarted!";
+	WebServer.sendHeader("Location", "/", true);
 	WebServer.send(302, "text/plain", "");
 	ESP.restart();
 }
@@ -167,3 +184,19 @@ void HandleGetLogs() {
 	WebServer.send(200, "text/html", GetLogs());
 }
 
+void HandleGetValues() {
+	String json = "[";
+
+	for (auto it = liveData.begin(); it != liveData.end(); ++it) {
+		if (it != liveData.begin()) json.concat(",");
+		json.concat("{\"name\":\"");
+		json.concat(String((*it).dp->getName()));
+		json.concat("\",\"value\":\"");
+		json.concat(String((*it).value));
+		json.concat("\"}");
+		
+	}
+	json.concat("]");
+	
+	WebServer.send(200, "text/html", json);
+}
