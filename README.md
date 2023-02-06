@@ -36,3 +36,6 @@ Durch dieses Verhalten wird auch sichergestellt, dass die Heizung nach einem Str
  - Das Modul lässt sich im Nachgang über WLAN(OTA) flashen.
 
  - Werte der Datenpunkte werden im Webinterface übersichtlich dargestellt (responsives Design) mit automatischer Aktualisierung (AJAX)
+ 
+ ![wide](https://user-images.githubusercontent.com/29315283/217073328-74bc63c6-5688-4ee7-8f82-0507d2c4505c.JPG)
+![small](https://user-images.githubusercontent.com/29315283/217073387-57d89a8f-52c1-41c8-a976-6f2cc904aa9c.JPG)
