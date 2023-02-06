@@ -44,7 +44,7 @@ class VitoWiFiClass {
   VitoWiFiClass();
   ~VitoWiFiClass();
 #ifdef ARDUINO_ARCH_ESP32
-  void setup(HardwareSerial* serial, int8_t rxPin, int8_t txPin);
+  void setup(SoftwareSerial* serial, int8_t rxPin, int8_t txPin);
 #endif
 #ifdef ESP8266
   void setup(SoftwareSerial* serial);

@@ -16,6 +16,7 @@ Die Datenpunkte werden automatisch im Webinterface mit dem aktuellen Wert angeze
  - MQTT-Broker IP eingeben (optional)
  - MQTT Topic Prefix anpassen (optional)
  - MQTT Client Id anpassen (optional)
+ - Änderung des Protokolls (P300 / KW) in zwei Dateien ändern(viessmann.h, viessmann.cpp) (optional)
 
 ## Features
 
