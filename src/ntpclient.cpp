@@ -19,7 +19,9 @@ void sendNTPpacket(IPAddress &address);
 time_t getNtpTime();
 
 void setTimeServer(IPAddress timesvr) {
-	Log("Configured NTP Server: " + String(timesvr.toString()));
+	char text[50];
+	sprintf(text,"Configured NTP Server: %s",timesvr.toString().c_str());
+	Log(text);
 	timeServer = timesvr;
 }
 
@@ -27,14 +29,16 @@ void updateTime() {
 	time_t recTime = getNtpTime();
 	if (recTime != 0) setTime(recTime);
 	//setSyncProvider(getNtpTime);
-	Log("NTP update finished");
+	Log(F("NTP update finished"));
 }
 
 time_t getNtpTime()
 {
 	Udp.begin(localPort);
 	while (Udp.parsePacket() > 0); // discard any previously received packets
-	Log("Transmit NTP request to " + timeServer.toString(), true);
+	char text[50];
+	sprintf(text, "Transmit NTP request to %s", timeServer.toString().c_str());
+	Log(text, true);
 	sendNTPpacket(timeServer);
 	uint32_t beginWait = millis();
 	while (millis() - beginWait < 1500) {

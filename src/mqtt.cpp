@@ -17,7 +17,10 @@ void setupMqtt(String server, String clientId, String prefix) {
 
 void publishMqtt(String topic, const char* payload) {
     //Log("MQTT: publish " + topic_prefix + topic + "->" + String(payload));
-    mqttClient.publish((topic_prefix + topic).c_str(), payload);
+    char fulltopic[100];
+    strcpy(fulltopic, topic_prefix.c_str());
+    strcat(fulltopic, topic.c_str());
+    mqttClient.publish(fulltopic, payload);
 }
 
 void checkMqtt() {
@@ -30,7 +33,9 @@ void checkMqtt() {
                 Log("MQTT: connection lost");
                 break;
         }
-        Log("MQTT (client id: " + client_id + "): connecting to " + broker + "... ");
+        char text[100];
+        sprintf(text,"MQTT (client id: %s): connecting to %s... ", client_id.c_str(), broker.c_str());
+        Log(text);
 
         // Attempt to connect
         if (mqttClient.connect(client_id.c_str())) {

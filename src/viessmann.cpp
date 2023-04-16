@@ -11,6 +11,7 @@ byte missingValuesCount = 0;
 std::vector<LiveData> liveData;
 
 //second parameter "group" is misused for the unit
+DPRaw geraeteId("Geräte-ID","", 0xF8);                                  //setLength() mandatory
 DPTemp aussenTemp("AußenTemp", " °C", 0x0800);
 DPHours betriebsstunden("Betriebsstunden", " Std.", 0x6568);
 DPTemp abgasTemp("AbgasTemp", " °C", 0x0808);
@@ -87,6 +88,9 @@ void setupVito() {
     stoerungsmeldung8.setLength(9);
     stoerungsmeldung9.setLength(9);
     stoerungsmeldung10.setLength(9);
+    geraeteId.setLength(2);
+
+    liveData.reserve(IDatapoint::getCollection().size());
 
     for (auto it = IDatapoint::getCollection().begin(); it != IDatapoint::getCollection().end(); ++it) {
         LiveData data = {(*it), ""};
@@ -97,8 +101,8 @@ void setupVito() {
 }
 
 void globalCallbackHandler(const IDatapoint& dp, DPValue value) {
-    missingValuesCount = 0;             // reset error count on response
-    publishMqtt("error", "0");          // reset error status over mqtt
+    if (missingValuesCount >=2) publishMqtt("error", "0");          // reset error status over mqtt
+    missingValuesCount = 0;                                         // reset error count on response
 
     char value_str[15] = {0};
     value.getString(value_str, sizeof(value_str));
@@ -113,25 +117,30 @@ void stoerungsmeldungCallbackHandler(const IDatapoint& dp, DPValue value) {
 
     String dpString = String(dpBuffer);
     // 0-1: Error Code, 2-5 yyyy, 6-7 MM, 8-9 dd, 10-11 weekday (01-07), 12-13 HH, 14-15 mm, 16-17 ss
-    String timeString = dpString.substring(8,10) + "." + dpString.substring(6,8) + "." + dpString.substring(4,6) + " " + dpString.substring(12,14) + ":" + dpString.substring(14,16) + ":" + dpString.substring(16,18) + " Uhr";
+    //String timeString = dpString.substring(8,10) + "." + dpString.substring(6,8) + "." + dpString.substring(4,6) + " " + dpString.substring(12,14) + ":" + dpString.substring(14,16) + ":" + dpString.substring(16,18) + " Uhr";
+    
+    
     uint8_t errorCode = strtol(dpString.substring(0,2).c_str(), 0, 16);
     String errorMessage = getErrorMessage(errorCode);       // resolve error code to error message
-
-    publishMqtt(dp.getName(), (timeString + "#" + errorMessage + "#" + dpString.substring(0,2)).c_str() );
+    char payload[100];
+    char errorIdentifier[100];
+    sprintf(errorIdentifier, "%s.%s.%s %s:%s:%s Uhr#%d",dpString.substring(8,10).c_str(),dpString.substring(6,8).c_str(),dpString.substring(4,6).c_str(),dpString.substring(12,14).c_str(),dpString.substring(14,16).c_str(),dpString.substring(16,18).c_str(), errorCode);
+    sprintf(payload, "%s.%s.%s %s:%s:%s Uhr#%s#%s",dpString.substring(8,10).c_str(),dpString.substring(6,8).c_str(),dpString.substring(4,6).c_str(),dpString.substring(12,14).c_str(),dpString.substring(14,16).c_str(),dpString.substring(16,18).c_str(), errorMessage.c_str(), dpString.substring(0,2).c_str());
+    publishMqtt(dp.getName(), payload);
 
     if(dp.getName() == "Störungsmeldung1") {
-        String errorIdentifier = timeString + "#" + errorCode;      // create unique string to compare errors
+        //String errorIdentifier = timeString + "#" + errorCode;      // create unique string to compare errors
 
         if (lastError != "" && lastError != errorIdentifier && errorCode != 0) {
-            publishMqtt("Störung","1");     // send error impulse once cause we are not able to determine the end of the error
+            publishMqtt(F("Störung"),"1");     // send error impulse once cause we are not able to determine the end of the error
             Log("Device in error state");
         }
         if(lastError == "" || lastError != errorIdentifier) {
             saveLastError(errorIdentifier);    // initially write error to filesystem and update on change
             lastError = errorIdentifier;
         }
+        publishMqtt(F("Störung"),"0"); 
     }
-    publishMqtt("Störung","0"); 
 }
 
 void getVitoData() {
@@ -141,202 +150,202 @@ void getVitoData() {
 String getErrorMessage(uint8_t errorCode) {
     switch (errorCode) {
         case 0:
-            return "Regelbetrieb (kein Fehler)";
+            return F("Regelbetrieb (kein Fehler)");
             break;
         case 15:
-            return "Wartung (für Reset Codieradresse 24 auf 0 stellen)";
+            return F("Wartung (für Reset Codieradresse 24 auf 0 stellen)");
             break;
         case 16:
-            return "Kurzschluss Außentemperatursensor";
+            return F("Kurzschluss Außentemperatursensor");
             break;
         case 24:
-            return "Unterbrechung Außentemperatursensor";
+            return F("Unterbrechung Außentemperatursensor");
             break;
         case 32:
-            return "Kurzschluss Vorlauftemperatursensor";
+            return F("Kurzschluss Vorlauftemperatursensor");
             break;
         case 33:
-            return "Kurzschluss Rücklauftemperatursensor";
+            return F("Kurzschluss Rücklauftemperatursensor");
             break;
         case 40:
-            return "Unterbrechung Außentemperatursensor";
+            return F("Unterbrechung Außentemperatursensor");
             break;
         case 41:
-            return "Unterbrechung Rücklauftemperatursensor";
+            return F("Unterbrechung Rücklauftemperatursensor");
             break;
         case 48:
-            return "Kurzschluss Kesseltemperatursensor";
+            return F("Kurzschluss Kesseltemperatursensor");
             break;
         case 56:
-            return "Unterbrechung Kesseltemperatursensor";
+            return F("Unterbrechung Kesseltemperatursensor");
             break;
         case 64:
-            return "Kurzschluss Vorlauftemperatursensor M2";
+            return F("Kurzschluss Vorlauftemperatursensor M2");
             break;
         case 66:
-            return "Unterbrechung Vorlauftemperatursensor M2";
+            return F("Unterbrechung Vorlauftemperatursensor M2");
             break;
         case 80:
-            return "Kurzschluss Speichertemperatursensor";
+            return F("Kurzschluss Speichertemperatursensor");
             break;
         case 88:
-            return "Unterbrechung Speichertemperatursensor";
+            return F("Unterbrechung Speichertemperatursensor");
             break;
         case 146:
-            return "Solar: Kurzschluss Kollektortemperatursensor";
+            return F("Solar: Kurzschluss Kollektortemperatursensor");
             break;
         case 147:
-            return "Solar: Kurzschluss Sensor S3";
+            return F("Solar: Kurzschluss Sensor S3");
             break;
         case 148:
-            return "Solar: Kurzschluss Speichertemperatursensor";
+            return F("Solar: Kurzschluss Speichertemperatursensor");
             break;
         case 154:
-            return "Solar: Unterbrechung Kollektortemperatursensor";
+            return F("Solar: Unterbrechung Kollektortemperatursensor");
             break;
         case 155:
-            return "Solar: Unterbrechung Sensor S3";
+            return F("Solar: Unterbrechung Sensor S3");
             break;
         case 156:
-            return "Solar: Unterbrechung Speichertemperatursensor";
+            return F("Solar: Unterbrechung Speichertemperatursensor");
             break;
         case 158:
-            return "Solar: Zu geringer oder kein Volumenstrom im Solarkreis oder Temperaturwächter hat ausgelöst";
+            return F("Solar: Zu geringer oder kein Volumenstrom im Solarkreis oder Temperaturwächter hat ausgelöst");
             break;
         case 159:
-            return "Solar: Fehlermeldung Solarteil (siehe Solarregler)";
+            return F("Solar: Fehlermeldung Solarteil (siehe Solarregler)");
             break;
         case 167:
-            return "Bedienteil defekt";
+            return F("Bedienteil defekt");
             break;
         case 176:
-            return "Kurzschluss Abgastemperatursensor";
+            return F("Kurzschluss Abgastemperatursensor");
             break;
         case 177:
-            return "Kommunikationsfehler Bedieneinheit";
+            return F("Kommunikationsfehler Bedieneinheit");
             break;
         case 180:
-            return "Interner Fehler (Elektronik)";
+            return F("Interner Fehler (Elektronik)");
             break;
         case 181:
-            return "Interner Fehler (Elektronik)";
+            return F("Interner Fehler (Elektronik)");
             break;
         case 182:
-            return "Ungültige Hardwarekennung (Elektronik)";
+            return F("Ungültige Hardwarekennung (Elektronik)");
             break;
         case 183:
-            return "Interner Fehler (Kesselkodierstecker)";
+            return F("Interner Fehler (Kesselkodierstecker)");
             break;
         case 184:
-            return "Unterbrechung Abgastemperatursensor";
+            return F("Unterbrechung Abgastemperatursensor");
             break;
         case 185:
-            return "Interner Fehler (Dateneingabe wiederholen)";
+            return F("Interner Fehler (Dateneingabe wiederholen)");
             break;
         case 186:
-            return "Kommunikationsfehler Erweiterungssatz für Mischerkreis M2";
+            return F("Kommunikationsfehler Erweiterungssatz für Mischerkreis M2");
             break;
         case 188:
-            return "Kommunikationsfehler Fernbedienung Vitorol, Heizkreis M1";
+            return F("Kommunikationsfehler Fernbedienung Vitorol, Heizkreis M1");
             break;
         case 189:
-            return "Kommunikationsfehler Fernbedienung Vitorol, Heizkreis M2";
+            return F("Kommunikationsfehler Fernbedienung Vitorol, Heizkreis M2");
             break;
         case 190:
-            return "Falsche Codierung Fernbedienung Vitorol";
+            return F("Falsche Codierung Fernbedienung Vitorol");
             break;
         case 193:
-            return "Externe Sicherheitseinrichtung (Kessel kühlt aus)";
+            return F("Externe Sicherheitseinrichtung (Kessel kühlt aus)");
             break;
         case 194:
-            return "Kommunikationsfehler Solarregelung";
+            return F("Kommunikationsfehler Solarregelung");
             break;
         case 197:
-            return "Kommunikationsfehler drehzahlgeregelte Heizkreispumpe, Heizkreis M1";
+            return F("Kommunikationsfehler drehzahlgeregelte Heizkreispumpe, Heizkreis M1");
             break;
         case 198:
-            return "Kommunikationsfehler drehzahlgeregelte Heizkreispumpe, Heizkreis M2";
+            return F("Kommunikationsfehler drehzahlgeregelte Heizkreispumpe, Heizkreis M2");
             break;
         case 199:
-            return "Falsche Codierung der Heizkreispumpe";
+            return F("Falsche Codierung der Heizkreispumpe");
             break;
         case 201:
-            return "Störmeldeeingang am Schaltmodul-V aktiv";
+            return F("Störmeldeeingang am Schaltmodul-V aktiv");
             break;
         case 205:
-            return "Kommunikationsfehler Vitocom 100 (KM-BUS)";
+            return F("Kommunikationsfehler Vitocom 100 (KM-BUS)");
             break;
         case 206:
-            return "Kommunikationsfehler Schaltmodul-V";
+            return F("Kommunikationsfehler Schaltmodul-V");
             break;
         case 207:
-            return "Kommunikationsfehler LON Modul";
+            return F("Kommunikationsfehler LON Modul");
             break;
         case 209:
-            return "Brennerstörung";
+            return F("Brennerstörung");
             break;
         case 212:
-            return "Sicherheitstemperaturbegrenzer hat ausgelöst oder Störmeldemodul nicht richtig gesteckt";
+            return F("Sicherheitstemperaturbegrenzer hat ausgelöst oder Störmeldemodul nicht richtig gesteckt");
             break;
         case 218:
-            return "Kurzschluss Raumtemperatursensor, Heizkreis M1";
+            return F("Kurzschluss Raumtemperatursensor, Heizkreis M1");
             break;
         case 219:
-            return "Kurzschluss Raumtemperatursensor, Heizkreis M2";
+            return F("Kurzschluss Raumtemperatursensor, Heizkreis M2");
             break;
         case 221:
-            return "Unterbrechung Raumtemperatursensor, Heizkreis M1";
+            return F("Unterbrechung Raumtemperatursensor, Heizkreis M1");
             break;
         case 222:
-            return "Unterbrechung Raumtemperatursensor, Heizkreis M2";
+            return F("Unterbrechung Raumtemperatursensor, Heizkreis M2");
             break;
         case 228:
-            return "Fehler Versorgungsspannung";
+            return F("Fehler Versorgungsspannung");
             break;
         case 229:
-            return "Interner Fehler (Ionisationselektrode)";
+            return F("Interner Fehler (Ionisationselektrode)");
             break;
         case 230:
-            return "Abgas- / Zuluftsystem verstopft";
+            return F("Abgas- / Zuluftsystem verstopft");
             break;
         case 240:
-            return "Interner Fehler (Regelung tauschen)";
+            return F("Interner Fehler (Regelung tauschen)");
             break;
         case 241:
-            return "Abgastemperaturbegrenzer ausgelöst";
+            return F("Abgastemperaturbegrenzer ausgelöst");
             break;
         case 242:
-            return "Temperaturbegrenzer ausgelöst";
+            return F("Temperaturbegrenzer ausgelöst");
             break;
         case 243:
-            return "Flammensigal beim Brennerstart bereits vorhanden";
+            return F("Flammensigal beim Brennerstart bereits vorhanden");
             break;
         case 244:
-            return "Flammensigal nicht vorhanden";
+            return F("Flammensigal nicht vorhanden");
             break;
         case 247:
-            return "Differenzdrucksensor defekt";
+            return F("Differenzdrucksensor defekt");
             break;
         case 248:
-            return "Brennstoffventil schließt zu spät";
+            return F("Brennstoffventil schließt zu spät");
             break;
         case 249:
-            return "Gebläsedrehzahl beim Brennerstart zu niedrig";
+            return F("Gebläsedrehzahl beim Brennerstart zu niedrig");
             break;
         case 250:
-            return "Gebläsestillstand nicht erreicht";
+            return F("Gebläsestillstand nicht erreicht");
             break;
         case 253:
-            return "Fehler Gasfeurungsautomat";
+            return F("Fehler Gasfeurungsautomat");
             break;
         case 254:
-            return "Starkes Störfeld (EMV) in der Nähe oder Elektronik defekt";
+            return F("Starkes Störfeld (EMV) in der Nähe oder Elektronik defekt");
             break;
         case 255:
-            return "Starkes Störfeld (EMV) in der Nähe oder interner Fehler";
+            return F("Starkes Störfeld (EMV) in der Nähe oder interner Fehler");
             break;
         default:
-            return "Unbekannter Fehler";
+            return F("Unbekannter Fehler");
     }
 }    
 

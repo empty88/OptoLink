@@ -75,7 +75,9 @@ void setup() {
 		getVitoData();
 
 		IPAddress HTTPS_ServerIP = WiFi.localIP();
-		Log("Server IP is: " + HTTPS_ServerIP.toString());
+		char text[50];
+		sprintf(text,"Server IP is: %s", HTTPS_ServerIP.toString().c_str() );
+		Log(text);
 	}
 }
 

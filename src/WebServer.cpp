@@ -50,7 +50,7 @@ void ShowPage(String content, String script, String style) {
 	page.concat(content);
 	page.concat(FPSTR(HTTP_END));
 
-	WebServer.send(200, "text/html", page);
+	WebServer.send(200, F("text/html"), page);
 }
 
 void HandleRoot() {
@@ -59,19 +59,19 @@ void HandleRoot() {
 	content.concat("{menu}");
 	
 	//automatically generate livedata from livedata vector
-	content.concat("<div class=\"livedata\">");
+	content.concat(F("<div class=\"livedata\">"));
 	for (auto it = liveData.begin(); it != liveData.end(); ++it) {
 		if (String((*it).value) == "") continue;
 		String dpName = String((*it).dp->getName());
-		content.concat("<div class=\"item\"><div class=\"name\">");
+		content.concat(F("<div class=\"item\"><div class=\"name\">"));
 		content.concat(dpName);
-		content.concat(": </div><div id=\"");
+		content.concat(F(": </div><div id=\""));
 		content.concat(dpName);
-		content.concat("\" class=\"value\">");
+		content.concat(F("\" class=\"value\">"));
 		content.concat(String((*it).value));
-		content.concat("</div></div>");
+		content.concat(F("</div></div>"));
     }
-	content.concat("</div>");
+	content.concat(F("</div>"));
 
 	ShowPage(content, FPSTR(HTTP_MAIN_SCRIPT), FPSTR(HTTP_STYLE));
 }
@@ -99,8 +99,8 @@ void HandleSetConfigMode() {
 	if (!mqtttopicprefix.endsWith("/")) mqtttopicprefix.concat("/");
 	if ((ssid == "") | (passwd == "") | (mqtttopicprefix == "") | (mqttclientid == "")){
 		offmessage = "Data incomplete";
-		WebServer.sendHeader("Location", "/", true);
-		WebServer.send(302, "text/plain", "");
+		WebServer.sendHeader(F("Location"), "/", true);
+		WebServer.send(302, F("text/plain"), "");
 		return;
 	}
 	GLOBAL::WlanSSID = ssid;
@@ -121,8 +121,8 @@ void HandleSetConfig() {
 	if (!mqtttopicprefix.endsWith("/")) mqtttopicprefix.concat("/");
 	if ((mqtttopicprefix == "") | (mqttclientid == "")){
 		offmessage = "Data incomplete";
-		WebServer.sendHeader("Location", String("/config"), true);
-		WebServer.send(302, "text/plain", "");
+		WebServer.sendHeader(F("Location"), String("/config"), true);
+		WebServer.send(302, F("text/plain"), "");
 		return;
 	}
 	GLOBAL::NtpServerIP = timesvr;
@@ -135,7 +135,7 @@ void HandleSetConfig() {
 
 void HandleLogs() {
 	Serial.println("HandleLogs");
-	String content = "<textarea readonly id=\"logs\" cols=\"45\" wrap=\"off\"></textarea>";
+	String content = F("<textarea readonly id=\"logs\" cols=\"45\" wrap=\"off\"></textarea>");
 	content.concat(FPSTR(HTTP_MENU_BACK));
 
 	ShowPage(content, FPSTR(HTTP_LOGS_SCRIPT), FPSTR(HTTP_STYLE));
@@ -168,20 +168,20 @@ void HandleGetTime() {
 	}
 	sprintf(timestr, "%02d.%02d.%02d - %02d:%02d:%02d", day(), month(), year(), int_hour, minute(), second());
 
-	WebServer.send(200, "text/html", timestr);
+	WebServer.send(200, F("text/html"), timestr);
 }
 
 void HandleRestart() {
 	Log("HandleRestart");
 
-	onmessage = "Optolink will be restarted!";
-	WebServer.sendHeader("Location", "/", true);
-	WebServer.send(302, "text/plain", "");
+	onmessage = F("Optolink will be restarted!");
+	WebServer.sendHeader(F("Location"), "/", true);
+	WebServer.send(302, F("text/plain"), "");
 	ESP.restart();
 }
 
 void HandleGetLogs() {
-	WebServer.send(200, "text/html", GetLogs());
+	WebServer.send(200, F("text/html"), GetLogs());
 }
 
 void HandleGetValues() {
@@ -189,14 +189,14 @@ void HandleGetValues() {
 
 	for (auto it = liveData.begin(); it != liveData.end(); ++it) {
 		if (it != liveData.begin()) json.concat(",");
-		json.concat("{\"name\":\"");
+		json.concat(F("{\"name\":\""));
 		json.concat(String((*it).dp->getName()));
-		json.concat("\",\"value\":\"");
+		json.concat(F("\",\"value\":\""));
 		json.concat(String((*it).value));
-		json.concat("\"}");
+		json.concat(F("\"}"));
 		
 	}
 	json.concat("]");
 	
-	WebServer.send(200, "text/html", json);
+	WebServer.send(200, F("text/html"), json);
 }
