@@ -1,7 +1,7 @@
 #include "Logging.h"
 #include "Arduino.h"
 #include <WiFiClient.h>
-const int LOG_DATA_SIZE = 80;
+const int LOG_DATA_SIZE = 40;		//> 40 makes webinterface unstable after some time'
 String LOG_DATA[LOG_DATA_SIZE];
 int LOG_DATA_INDEX = 0;
 
@@ -17,7 +17,7 @@ void Log(String message, bool dummyTime) {
 		}
 		LOG_DATA_INDEX = LOG_DATA_SIZE - 1;
 	}
-	char logString[170];
+	char logString[120];
 	if (dummyTime) {
 		sprintf(logString, "00.00. 00:00:00 - %s", message.c_str());
 		LOG_DATA[LOG_DATA_INDEX] = logString;
