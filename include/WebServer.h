@@ -18,7 +18,7 @@ const char HTTP_MAIN_SCRIPT[] PROGMEM =
 "function init() {\n"
 "	clock();\n"
 "	setTimeout(message, 5000);\n"
-"	setTimeout(getValues, 10000);\n"
+"	setTimeout(getValues, 2000);\n"
 "};\n"
 "function clock() {\n"
 "	const r = new XMLHttpRequest();\n"
@@ -41,8 +41,30 @@ const char HTTP_MAIN_SCRIPT[] PROGMEM =
 "			var arr = JSON.parse(r.responseText);\n"
 "			for (var item in arr) {\n"
 "				if(arr[item].value != '') {\n"
-"					document.getElementById(arr[item].name).innerHTML=arr[item].value;\n"
+"					if(arr[item].value_str != '') {\n"
+"						document.getElementById(arr[item].name).innerHTML=arr[item].value_str;\n"
+"					} else {\n"
+"						document.getElementById(arr[item].name).innerHTML=arr[item].value;\n"
+"					};\n"
 "				};\n"
+"				if(arr[item].name == 'Betriebsart') {\n"
+"					document.getElementById('om_off').setAttribute(\"class\", \"\");\n"
+"					document.getElementById('om_ww').setAttribute(\"class\", \"\");\n"
+"					document.getElementById('om_h-ww').setAttribute(\"class\", \"\");\n"
+"					if(arr[item].value == '0') { \n"
+"						document.getElementById('om_off').classList.add('menu-item-active');\n"
+"						document.getElementById('om_ww').classList.add('menu-item');\n"
+"						document.getElementById('om_h-ww').classList.add('menu-item');\n"
+"					} else if(arr[item].value == '1') {\n"
+"						document.getElementById('om_ww').classList.add('menu-item-active');\n"
+"						document.getElementById('om_off').classList.add('menu-item');\n"
+"						document.getElementById('om_h-ww').classList.add('menu-item');\n"
+"					} else if(arr[item].value == '2') {\n"
+"						document.getElementById('om_h-ww').classList.add('menu-item-active');\n"
+"						document.getElementById('om_off').classList.add('menu-item');\n"
+"						document.getElementById('om_ww').classList.add('menu-item');\n"
+"					};\n"
+"				};"
 "			};\n"
 "		};\n"
 "	};\n"
@@ -144,7 +166,10 @@ const char HTTP_STYLE[] PROGMEM =
 "	transition-duration: 0.4s;\n"
 "	cursor: pointer;\n"
 "}\n"
-
+"div .menu-item-active button {\n"
+"	background-color: #6967d3;\n"
+"	border: #df335c 3px solid;\n"
+"}\n"
 "@media (max-width: 800px) {\n"
 "button {\n"
 "	line-height: 2.4rem;\n"
@@ -218,7 +243,7 @@ const char HTTP_STYLE[] PROGMEM =
 "	text-align: center;\n"
 "	margin: auto;\n"
 "}\n"
-"div .menu-item {\n"
+"div .menu-item, .menu-item-active {\n"
 "	display: inline-block;\n"
 "	text-align: center;\n"
 "}\n"
@@ -300,6 +325,13 @@ const char HTTP_MENU[] PROGMEM =
 "<div class=\"menu-item\"><form action=\"restart\" method=\"get\"><button>Neustart</button></form></div>\n"
 "</div>\n";
 
+const char HTTP_OM_MENU[] PROGMEM =
+"<div class=\"menu\">\n"
+"<div id=\"om_ww\" class=\"menu-item{wwActive}\" ><form action=\"setWW\" method=\"get\"><button>Warmwasser</button></form></div>\n"
+"<div id=\"om_h-ww\" class=\"menu-item{h-wwActive}\"><form action=\"setH-WW\" method=\"get\"><button>Heizen + WW</button></form></div>\n"
+"<div id=\"om_off\" class=\"menu-item{offActive}\"><form action=\"setOff\" method=\"get\"><button>Abschaltbetrieb</button></form></div>\n"
+"</div>\n";
+
 const char HTTP_MENU_BACK[] PROGMEM =
 "<form action=\"/\" method=\"get\"><button>Zurück</button></form>\n";
 
@@ -333,6 +365,10 @@ void StartWebServer();
 void StartWebServer(bool configMode);
 
 void HandleTest();
+
+void HandleSetWW();
+void HandleSetH_WW();
+void HandleSetOff();
 
 
 class WebServer

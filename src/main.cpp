@@ -28,7 +28,7 @@ void getValues();
 void setupWiFi();
 
 void setup() {
-	Serial.begin(4800);
+	Serial.begin(74880);
 	pinMode(LED_PIN, OUTPUT);
 
 	readConfig();

@@ -29,6 +29,10 @@ void StartWebServer(bool configMode) {
 		WebServer.on("/getTime", HandleGetTime);
 		WebServer.on("/getValues", HandleGetValues);
 		WebServer.on("/restart", HandleRestart);
+
+		WebServer.on("/setWW", HandleSetWW);
+		WebServer.on("/setH-WW", HandleSetH_WW);
+		WebServer.on("/setOff", HandleSetOff);
 	}
 	WebServer.begin();
 }
@@ -40,7 +44,20 @@ void ShowPage(String content, String script, String style) {
 	page.concat(style);
 	page.concat(FPSTR(HTTP_CONTAINER));
 
+	String om_menu = FPSTR(HTTP_OM_MENU);
+	if(operationMode == 0) {
+		om_menu.replace("{offActive}", "-active");
+	} else if (operationMode == 1) {
+		om_menu.replace("{wwActive}", "-active");
+	} else if(operationMode == 2) {
+		om_menu.replace("{h-wwActive}", "-active");
+	}
+	om_menu.replace("{offActive}", "");
+	om_menu.replace("{wwActive}", "");
+	om_menu.replace("{h-wwActive}", "");
+
 	// replacements
+	content.replace("{om_menu}", om_menu);
 	content.replace("{menu}", FPSTR(HTTP_MENU));
 	content.replace("{onmessage}", onmessage);
 	content.replace("{offmessage}", offmessage);
@@ -56,6 +73,7 @@ void ShowPage(String content, String script, String style) {
 void HandleRoot() {
 	Serial.println("HandleRoot");
 	String content = FPSTR(HTTP_MAIN);
+	content.concat("{om_menu}");
 	content.concat("{menu}");
 	
 	//automatically generate livedata from livedata vector
@@ -68,7 +86,11 @@ void HandleRoot() {
 		content.concat(F(": </div><div id=\""));
 		content.concat(dpName);
 		content.concat(F("\" class=\"value\">"));
-		content.concat(String((*it).value));
+		if (String((*it).value_str) == "") {
+			content.concat(String((*it).value));
+		} else {
+			content.concat(String((*it).value_str));
+		}
 		content.concat(F("</div></div>"));
     }
 	content.concat(F("</div>"));
@@ -176,7 +198,7 @@ void HandleRestart() {
 
 	onmessage = F("Optolink will be restarted!");
 	WebServer.sendHeader(F("Location"), "/", true);
-	WebServer.send(302, F("text/plain"), "");
+	WebServer.send(303, F("text/plain"), "");
 	ESP.restart();
 }
 
@@ -193,10 +215,35 @@ void HandleGetValues() {
 		json.concat(String((*it).dp->getName()));
 		json.concat(F("\",\"value\":\""));
 		json.concat(String((*it).value));
+		json.concat(F("\",\"value_str\":\""));
+		json.concat(String((*it).value_str));
 		json.concat(F("\"}"));
 		
 	}
 	json.concat("]");
 	
-	WebServer.send(200, F("text/html"), json);
+	WebServer.send(200, F("application/json"), json);
 }
+
+void HandleSetOff() {
+	setOperationMode(0);
+	readOperationMode();
+	WebServer.sendHeader(F("Location"), "/", true);
+	WebServer.send(303, F("text/html"), "");
+}
+
+void HandleSetWW() {
+	setOperationMode(1);
+	readOperationMode();
+	WebServer.sendHeader(F("Location"), "/", true);
+	WebServer.send(303, F("text/html"), "");
+}
+
+void HandleSetH_WW() {
+	setOperationMode(2);
+	readOperationMode();
+	WebServer.sendHeader(F("Location"), "/", true);
+	WebServer.send(303, F("text/html"), "");
+}
+
+

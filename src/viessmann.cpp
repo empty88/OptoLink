@@ -9,14 +9,13 @@ SoftwareSerial swSer;
 
 byte missingValuesCount = 0;
 std::vector<LiveData> liveData;
+byte operationMode = -1;
 
 //second parameter "group" is misused for the unit
 DPRaw geraeteId("Geräte-ID","", 0xF8);                                  //setLength() mandatory
 DPTemp aussenTemp("AußenTemp", " °C", 0x0800);
 DPHours betriebsstunden("Betriebsstunden", " Std.", 0x6568);
 DPTemp abgasTemp("AbgasTemp", " °C", 0x0808);
-DPTemp ladespeicherObenTemp("LadespeicherObenTemp", " °C", 0x0812);
-DPTemp ladespeicherUntenTemp("LadespeicherUntenTemp", " °C", 0x0814);
 DPTemp kesselIstTemp("KesselIstTemp", " °C", 0x0802);
 DPTemp kesselSollTemp("KesselSollTemp", " °C", 0x555A);
 DPTemp warmwasserSollTemp("WarmwasserSollTemp", " °C", 0x6300);
@@ -33,6 +32,7 @@ DPMode solarinfo("Solarinfo", "", 0x7754);
 DPMode speicherladepumpe("Speicherladepumpe", "", 0x6513);
 DPMode betriebsart("Betriebsart", "", 0x3323);
 DPMode sparbetrieb("Sparbetrieb", "", 0x3302);
+DPMode partybetrieb("Partybetrieb", "", 0x3303);
 DPHours brennerlaufzeit("Brennerlaufzeit", " Std.", 0x0886);
 DPMode brennerstoerung("Brennerstörung", "", 0x0883);
 DPCount brennerstarts("Brennerstarts", "", 0x088A);
@@ -62,12 +62,27 @@ const uint8_t startBytes[] = {0x41, 0x05, 0x00, 0x01};
 
 void tempCallbackHandler(const IDatapoint& dp, DPValue value);
 void globalCallbackHandler(const IDatapoint& dp, DPValue value);
+void omCallbackHandler(const IDatapoint& dp, DPValue value);
+void swCallbackHandler(const IDatapoint& dp, DPValue value);
+void boolCallbackHandler(const IDatapoint& dp, DPValue value);
 void stoerungsmeldungCallbackHandler(const IDatapoint& dp, DPValue value);
-void addValueToLiveData(const IDatapoint& dp, String value);
+void addValueToLiveData(const IDatapoint& dp, String value, String value_str);
 
 void setupVito() {
     VitoWiFi.setup(&swSer);
     VitoWiFi.setGlobalCallback(&globalCallbackHandler);
+    betriebsart.setCallback(&omCallbackHandler);        // convert operation modes to text
+    umschaltventil.setCallback(&swCallbackHandler);     // convert switch valve modes to text
+    nachladeunterdrueckung.setCallback(&boolCallbackHandler);
+    solarpumpe.setCallback(&boolCallbackHandler);
+    sparbetrieb.setCallback(&boolCallbackHandler);
+    partybetrieb.setCallback(&boolCallbackHandler);
+    umwaelzpumpe.setCallback(&boolCallbackHandler);
+    heizkreispumpe.setCallback(&boolCallbackHandler);
+    speicherladepumpe.setCallback(&boolCallbackHandler);
+    betriebsart.setWriteable(true);                      // make it writable
+    sparbetrieb.setWriteable(true);
+    partybetrieb.setWriteable(true);
     stoerungsmeldung1.setCallback(&stoerungsmeldungCallbackHandler);
     stoerungsmeldung2.setCallback(&stoerungsmeldungCallbackHandler);
     stoerungsmeldung3.setCallback(&stoerungsmeldungCallbackHandler);
@@ -88,6 +103,7 @@ void setupVito() {
     stoerungsmeldung8.setLength(9);
     stoerungsmeldung9.setLength(9);
     stoerungsmeldung10.setLength(9);
+    
     geraeteId.setLength(2);
 
     liveData.reserve(IDatapoint::getCollection().size());
@@ -100,37 +116,80 @@ void setupVito() {
     lastError = readLastError();
 }
 
-void globalCallbackHandler(const IDatapoint& dp, DPValue value) {
+void globalCallbackHandler(const IDatapoint& dp, DPValue dpvalue) {
     if (missingValuesCount >=2) publishMqtt("error", "0");          // reset error status over mqtt
     missingValuesCount = 0;                                         // reset error count on response
 
-    char value_str[15] = {0};
-    value.getString(value_str, sizeof(value_str));
-    publishMqtt(dp.getName(),value_str);
-    strcat(value_str, dp.getGroup());   // add unit for web display
-    addValueToLiveData(dp, value_str);
+    char value[15] = {0};
+    dpvalue.getString(value, sizeof(value));
+    publishMqtt(dp.getName(),value);
+    strcat(value, dp.getGroup());   // add unit for web display
+    addValueToLiveData(dp, value, "");
 }
 
-void stoerungsmeldungCallbackHandler(const IDatapoint& dp, DPValue value) {
+void omCallbackHandler(const IDatapoint& dp, DPValue dpvalue) {
+    char value[15] = {0};
+    String value_str;
+    dpvalue.getString(value, sizeof(value));
+    if (strcmp(value,"0") == 0) {
+        value_str = "Abschaltbetrieb";
+    } else if(strcmp(value,"1") == 0) {
+        value_str = "Nur Warmwasser";
+    } else if(strcmp(value,"2") == 0) {
+        value_str = "Heizen+Warmwasser";
+    }
+    publishMqtt(dp.getName(),value);
+    addValueToLiveData(dp, value, value_str);
+    operationMode = (byte)value[0] - '0';
+}
+
+void swCallbackHandler(const IDatapoint& dp, DPValue dpvalue) {
+    char value[15] = {0};
+    String value_str;
+    dpvalue.getString(value, sizeof(value));
+    if (strcmp(value,"0") == 0) {
+        value_str = "undefiniert";
+    } else if(strcmp(value,"1") == 0) {
+        value_str = "Heizen";
+    } else if(strcmp(value,"2") == 0) {
+        value_str = "Mittelstellung";
+    } else if(strcmp(value,"3") == 0) {
+        value_str = "Warmwasser";
+    }
+    publishMqtt(dp.getName(),value);
+    addValueToLiveData(dp, value, value_str);
+}
+
+void boolCallbackHandler(const IDatapoint& dp, DPValue dpvalue) {
+    char value[15] = {0};
+    String value_str;
+    dpvalue.getString(value, sizeof(value));
+    if (strcmp(value,"0") == 0) {
+        value_str = "Aus";
+    } else if(strcmp(value,"1") == 0) {
+        value_str = "Ein";
+    }
+    publishMqtt(dp.getName(),value);
+    addValueToLiveData(dp, value, value_str);
+}
+
+void stoerungsmeldungCallbackHandler(const IDatapoint& dp, DPValue dpvalue) {
     char dpBuffer[128];
-    value.getString(dpBuffer,128);
+    dpvalue.getString(dpBuffer,128);
 
     String dpString = String(dpBuffer);
-    // 0-1: Error Code, 2-5 yyyy, 6-7 MM, 8-9 dd, 10-11 weekday (01-07), 12-13 HH, 14-15 mm, 16-17 ss
+    // 0-1: Error Code, 2-5: yyyy, 6-7: MM, 8-9: dd, 10-11: weekday (01-07), 12-13: HH, 14-15: mm, 16-17: ss
     //String timeString = dpString.substring(8,10) + "." + dpString.substring(6,8) + "." + dpString.substring(4,6) + " " + dpString.substring(12,14) + ":" + dpString.substring(14,16) + ":" + dpString.substring(16,18) + " Uhr";
-    
     
     uint8_t errorCode = strtol(dpString.substring(0,2).c_str(), 0, 16);
     String errorMessage = getErrorMessage(errorCode);       // resolve error code to error message
     char payload[100];
     char errorIdentifier[100];
-    sprintf(errorIdentifier, "%s.%s.%s %s:%s:%s Uhr#%d",dpString.substring(8,10).c_str(),dpString.substring(6,8).c_str(),dpString.substring(4,6).c_str(),dpString.substring(12,14).c_str(),dpString.substring(14,16).c_str(),dpString.substring(16,18).c_str(), errorCode);
+    sprintf(errorIdentifier, "%s.%s.%s %s:%s:%s Uhr#%d",dpString.substring(8,10).c_str(),dpString.substring(6,8).c_str(),dpString.substring(4,6).c_str(),dpString.substring(12,14).c_str(),dpString.substring(14,16).c_str(),dpString.substring(16,18).c_str(), errorCode); // create unique string to compare errors
     sprintf(payload, "%s.%s.%s %s:%s:%s Uhr#%s#%s",dpString.substring(8,10).c_str(),dpString.substring(6,8).c_str(),dpString.substring(4,6).c_str(),dpString.substring(12,14).c_str(),dpString.substring(14,16).c_str(),dpString.substring(16,18).c_str(), errorMessage.c_str(), dpString.substring(0,2).c_str());
     publishMqtt(dp.getName(), payload);
 
-    if(dp.getName() == "Störungsmeldung1") {
-        //String errorIdentifier = timeString + "#" + errorCode;      // create unique string to compare errors
-
+    if(strcmp(dp.getName(), "Störungsmeldung1") == 0) {
         if (lastError != "" && lastError != errorIdentifier && errorCode != 0) {
             publishMqtt(F("Störung"),"1");     // send error impulse once cause we are not able to determine the end of the error
             Log("Device in error state");
@@ -349,11 +408,23 @@ String getErrorMessage(uint8_t errorCode) {
     }
 }    
 
-void addValueToLiveData(const IDatapoint& dp, String value) {
+void addValueToLiveData(const IDatapoint& dp, String value, String value_str) {
     for (auto it = liveData.begin(); it != liveData.end(); ++it) {
         if (dp.getName() == (*it).dp->getName()) {
             (*it).value = value;
+            (*it).value_str = value_str;
         }
     }
+}
 
+void setOperationMode(uint8_t value) {
+    DPValue dpvalue(value);
+    VitoWiFi.writeDatapoint(betriebsart,dpvalue);
+    char text[50];
+	sprintf(text, "Betriebsart gesetzt: %c", (value + '0'));
+    Log(text);
+}
+
+void readOperationMode() {
+    VitoWiFi.readDatapoint(betriebsart);
 }

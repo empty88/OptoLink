@@ -11,11 +11,17 @@ extern byte missingValuesCount;
 struct LiveData {
     IDatapoint* dp;
     String value;
+    String value_str;
 };
 
 extern std::vector<LiveData> liveData;
+extern uint8_t operationMode;
+
 
 void setupVito();
 
 void getVitoData();
 String getErrorMessage(uint8_t code);
+
+void setOperationMode(uint8_t val);
+void readOperationMode();
