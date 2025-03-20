@@ -39,5 +39,6 @@ Durch dieses Verhalten wird auch sichergestellt, dass die Heizung nach einem Str
 
  - Umschalten der Betriebsart über das Webinterface möglich
  
- ![wide](https://user-images.githubusercontent.com/29315283/217073328-74bc63c6-5688-4ee7-8f82-0507d2c4505c.JPG)
-![small](https://user-images.githubusercontent.com/29315283/217073387-57d89a8f-52c1-41c8-a976-6f2cc904aa9c.JPG)
+![optolink](https://github.com/user-attachments/assets/e07d1344-41cd-451d-8150-90fb145f2c34)
+![optolink2](https://github.com/user-attachments/assets/99c0a4d4-f212-46b6-a0fd-2bfe100cbbca)
+
