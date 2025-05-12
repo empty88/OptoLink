@@ -38,11 +38,13 @@ void StartWebServer(bool configMode) {
 }
 
 void ShowPage(String content, String script, String style) {
-	String page = FPSTR(HTTP_HEADER);
-	page.concat(script);
-	page.concat(FPSTR(HTTP_SCRIPT_END));
-	page.concat(style);
-	page.concat(FPSTR(HTTP_CONTAINER));
+	WebServer.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    WebServer.send(200, F("text/html"), "");
+	WebServer.sendContent_P(HTTP_HEADER);
+	WebServer.sendContent(script);
+	WebServer.sendContent_P(HTTP_SCRIPT_END);
+	WebServer.sendContent(style);
+	WebServer.sendContent_P(HTTP_CONTAINER);
 
 	String om_menu = FPSTR(HTTP_OM_MENU);
 	if(operationMode == 0) {
@@ -64,10 +66,9 @@ void ShowPage(String content, String script, String style) {
 	content.replace("{color}", "#FF0000");
 	onmessage = "";
 	offmessage = "";
-	page.concat(content);
-	page.concat(FPSTR(HTTP_END));
-
-	WebServer.send(200, F("text/html"), page);
+	
+	WebServer.sendContent(content);
+	WebServer.sendContent_P(HTTP_END);
 }
 
 void HandleRoot() {
