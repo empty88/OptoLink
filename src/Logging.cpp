@@ -2,7 +2,7 @@
 #include "Arduino.h"
 #include <WiFiClient.h>
 #include "ntpclient.h"
-const int LOG_DATA_SIZE = 60;		// >60 makes webinterface unstable after some time
+const int LOG_DATA_SIZE = 150;
 String LOG_DATA[LOG_DATA_SIZE];
 int LOG_DATA_INDEX = 0;
 
