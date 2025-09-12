@@ -16,6 +16,7 @@ Die Datenpunkte werden automatisch im Webinterface mit dem aktuellen Wert angeze
  - MQTT-Broker IP eingeben (optional)
  - MQTT Topic Prefix anpassen (optional)
  - MQTT Client Id anpassen (optional)
+ - MQTT Credentials angeben (optional)
  - Änderung des Protokolls (P300 / KW) in zwei Dateien ändern(viessmann.h, viessmann.cpp) (optional)
 
 ## Features
@@ -37,7 +38,7 @@ Durch dieses Verhalten wird auch sichergestellt, dass die Heizung nach einem Str
 
  - Werte der Datenpunkte werden im Webinterface übersichtlich dargestellt (responsives Design) mit automatischer Aktualisierung (AJAX)
 
- - Umschalten der Betriebsart über das Webinterface möglich
+ - Umschalten der Betriebsart über das Webinterface und MQTT möglich
  
 ![optolink](https://github.com/user-attachments/assets/e07d1344-41cd-451d-8150-90fb145f2c34)
 ![optolink2](https://github.com/user-attachments/assets/99c0a4d4-f212-46b6-a0fd-2bfe100cbbca)
