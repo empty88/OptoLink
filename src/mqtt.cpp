@@ -1,18 +1,33 @@
 #include "mqtt.h"
+#include <viessmann.h>
 
 WiFiClient mqttWifiClient;
 PubSubClient mqttClient(mqttWifiClient);
 String broker = "";
 String topic_prefix = "";
 String client_id = "";
+String username = "";
+String password = "";
+char subTopicOperationMode[100] = "";
 
 void setupMqtt(String server, String clientId, String prefix) {
+    setupMqtt(server, clientId, prefix, "", "");
+}
+
+void setupMqtt(String server, String clientId, String prefix, String user, String pass) {
     broker = server;
     static char c[256];                 // important workaround!
     strcpy(c, server.c_str());          //
     mqttClient.setServer(c, 1883);      //
     topic_prefix = prefix;
     client_id = clientId;
+    if (user != "" && pass != "") {
+        username = user;
+        password = pass;
+    }
+    mqttClient.setCallback(callback);
+    strcpy(subTopicOperationMode, topic_prefix.c_str());
+    strcat(subTopicOperationMode, "set_betriebsart");
 }
 
 void publishMqtt(String topic, const char* payload) {
@@ -38,9 +53,19 @@ void checkMqtt() {
         Log(text);
 
         // Attempt to connect
-        if (mqttClient.connect(client_id.c_str())) {
+        if (mqttClient.connect(client_id.c_str(), username != "" ? username.c_str(): NULL, password != "" ? password.c_str() : NULL)) {
+            if (username != "" && password != "") {
+                Log("MQTT credentials provided");
+            }
             Log("MQTT: Connected");
-        
+            if (mqttClient.subscribe(subTopicOperationMode)) {
+                char text[50];
+                sprintf(text,"Send operationMode to %s", subTopicOperationMode);
+                Log(text);
+            } else {
+                Log("subscription failed");
+            }
+            
         } else {
             switch (mqttClient.state()) {
                 case MQTT_CONNECT_FAILED:
@@ -64,6 +89,18 @@ void checkMqtt() {
                 default:
                     Log(String(mqttClient.state()));
             }
+        }
+    }
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+    if( (strcmp(topic,subTopicOperationMode) == 0)) {
+        if ((char)payload[0] == '0') {
+            setOperationMode(0);
+        } else if ((char)payload[0] == '1') {
+            setOperationMode(1);
+        } else if ((char) payload[0] == '2') {
+            setOperationMode(2);
         }
     }
 }

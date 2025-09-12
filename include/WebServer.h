@@ -63,6 +63,10 @@ const char HTTP_MAIN_SCRIPT[] PROGMEM =
 "						document.getElementById('om_h-ww').classList.add('menu-item-active');\n"
 "						document.getElementById('om_off').classList.add('menu-item');\n"
 "						document.getElementById('om_ww').classList.add('menu-item');\n"
+"					} else {\n"
+"						document.getElementById('om_off').classList.add('menu-item');\n"
+"						document.getElementById('om_ww').classList.add('menu-item');\n"
+"						document.getElementById('om_h-ww').classList.add('menu-item');\n"				
 "					};\n"
 "				};"
 "			};\n"
@@ -295,6 +299,10 @@ const char HTTP_MAIN_CONFIG_MODE[] PROGMEM =
 "<div class=\"form-row\"><div class=\"form-label\">MQTT Broker: </div><div class=\"form-input\"><input type=\"text\" id=\"mqttsvr\" name=\"mqttsvr\" size=\"10\" value=\"{mqttserver}\"></div></div>\n"
 "<div class=\"form-row\"><div class=\"form-label\">MQTT Client Id: *</div><div class=\"form-input\"><input type=\"text\" id=\"mqttclientid\" name=\"mqttclientid\" size=\"10\" value=\"{mqttclientid}\"></div></div>\n"
 "<div class=\"form-row\"><div class=\"form-label\">MQTT Topic Prefix: *</div><div class=\"form-input\"><input type=\"text\" id=\"mqtttopicprefix\" name=\"mqtttopicprefix\" size=\"10\" value=\"{mqtttopicprefix}\"></div></div>\n"
+
+"<div class=\"form-row\"><div class=\"form-label\">MQTT Username: </div><div class=\"form-input\"><input type=\"text\" id=\"mqttusername\" name=\"mqttusername\" size=\"10\" value=\"{mqttusername}\"></div></div>\n"
+"<div class=\"form-row\"><div class=\"form-label\">MQTT Passwort: </div><div class=\"form-input\"><input type=\"text\" id=\"mqttpassword\" name=\"mqttpassword\" size=\"10\" value=\"{mqttpassword}\"></div></div>\n"
+
 "<div class=\"form-row\"><div class=\"form-label\" >* Pflichtfelder</div></div>\n"
 "</div>\n"
 "<br />\n"
@@ -312,6 +320,10 @@ const char HTTP_CONFIG[] PROGMEM =
 "<div class=\"form-row\"><div class=\"form-label\">MQTT Broker: </div><div class=\"form-input\"><input type=\"text\" id=\"mqttsvr\" name=\"mqttsvr\" size=\"10\" value=\"{mqttserver}\"></div></div>\n"
 "<div class=\"form-row\"><div class=\"form-label\">MQTT Client Id: *</div><div class=\"form-input\"><input type=\"text\" id=\"mqttclientid\" name=\"mqttclientid\" size=\"10\" value=\"{mqttclientid}\"></div></div>\n"
 "<div class=\"form-row\"><div class=\"form-label\">MQTT Topic Prefix: *</div><div class=\"form-input\"><input type=\"text\" id=\"mqtttopicprefix\" name=\"mqtttopicprefix\" size=\"10\" value=\"{mqtttopicprefix}\"></div></div>\n"
+
+"<div class=\"form-row\"><div class=\"form-label\">MQTT Username: </div><div class=\"form-input\"><input type=\"text\" id=\"mqttusername\" name=\"mqttusername\" size=\"10\" value=\"{mqttusername}\"></div></div>\n"
+"<div class=\"form-row\"><div class=\"form-label\">MQTT Passwort: </div><div class=\"form-input\"><input type=\"text\" id=\"mqttpassword\" name=\"mqttpassword\" size=\"10\" value=\"{mqttpassword}\"></div></div>\n"
+
 "<div class=\"form-row\"><div class=\"form-label\">* Pflichtfelder</div></div>"
 "</div>\n"
 "<br />\n"

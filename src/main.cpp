@@ -59,7 +59,12 @@ void setup() {
 		t.every(43200000, updateTime); 	// ntp update every 12 hours
 	 
 	 	if ((GLOBAL::MqttBrokerIP != "") && (GLOBAL::MqttClientId != "") && (GLOBAL::MqttTopicPrefix != "")) {
-			setupMqtt(GLOBAL::MqttBrokerIP, GLOBAL::MqttClientId, GLOBAL::MqttTopicPrefix);
+			if ((GLOBAL::MqttUsername != "") && (GLOBAL::MqttPassword != "")) {
+				setupMqtt(GLOBAL::MqttBrokerIP, GLOBAL::MqttClientId, GLOBAL::MqttTopicPrefix, GLOBAL::MqttUsername, GLOBAL::MqttPassword);
+			} else {
+				setupMqtt(GLOBAL::MqttBrokerIP, GLOBAL::MqttClientId, GLOBAL::MqttTopicPrefix);
+			}
+			
 			t.every(10000,checkMqtt);		// check if mqtt is still connected, reconnect if needed
 			Log("MQTT started");
 		} else {

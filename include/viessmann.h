@@ -23,5 +23,5 @@ void setupVito();
 void getVitoData();
 String getErrorMessage(uint8_t code);
 
-void setOperationMode(uint8_t val);
+extern void setOperationMode(uint8_t val);
 void readOperationMode();

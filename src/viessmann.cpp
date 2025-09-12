@@ -421,7 +421,7 @@ void setOperationMode(uint8_t value) {
     DPValue dpvalue(value);
     VitoWiFi.writeDatapoint(betriebsart,dpvalue);
     char text[50];
-	sprintf(text, "Betriebsart gesetzt: %c", (value + '0'));
+	sprintf(text, "Operation mode set: %c", (value + '0'));
     Log(text);
 }
 

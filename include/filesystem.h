@@ -15,4 +15,6 @@ struct GLOBAL {
 	static String MqttTopicPrefix;
 	static String MqttBrokerIP;
 	static String MqttClientId;
+	static String MqttUsername;
+	static String MqttPassword;
 };

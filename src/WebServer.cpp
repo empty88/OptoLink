@@ -41,9 +41,9 @@ void ShowPage(String content, String script, String style) {
 	WebServer.setContentLength(CONTENT_LENGTH_UNKNOWN);
     WebServer.send(200, F("text/html"), "");
 	WebServer.sendContent_P(HTTP_HEADER);
-	WebServer.sendContent(script);
+	if (script != "") WebServer.sendContent(script);
 	WebServer.sendContent_P(HTTP_SCRIPT_END);
-	WebServer.sendContent(style);
+	if (style != "") WebServer.sendContent(style);
 	WebServer.sendContent_P(HTTP_CONTAINER);
 
 	String om_menu = FPSTR(HTTP_OM_MENU);
@@ -108,6 +108,8 @@ void HandleRootConfigMode() {
 	content.replace("{mqttserver}", GLOBAL::MqttBrokerIP);
 	content.replace("{mqtttopicprefix}", GLOBAL::MqttTopicPrefix);
 	content.replace("{mqttclientid}", GLOBAL::MqttClientId);
+	content.replace("{mqttusername}", GLOBAL::MqttUsername);
+	content.replace("{mqttpassword}", GLOBAL::MqttPassword);
 
 	ShowPage(content, "", FPSTR(HTTP_STYLE));
 }
@@ -119,6 +121,8 @@ void HandleSetConfigMode() {
 	String mqtttopicprefix = WebServer.arg("mqtttopicprefix");
 	String mqttsvr = WebServer.arg("mqttsvr");
 	String mqttclientid = WebServer.arg("mqttclientid");
+	String mqttusername = WebServer.arg("mqttusername");
+	String mqttpassword = WebServer.arg("mqttpassword");
 	if (!mqtttopicprefix.endsWith("/")) mqtttopicprefix.concat("/");
 	if ((ssid == "") | (passwd == "") | (mqtttopicprefix == "") | (mqttclientid == "")){
 		offmessage = "Data incomplete";
@@ -132,6 +136,8 @@ void HandleSetConfigMode() {
 	GLOBAL::MqttTopicPrefix = mqtttopicprefix;
 	GLOBAL::MqttBrokerIP = mqttsvr;
 	GLOBAL::MqttClientId = mqttclientid;
+	GLOBAL::MqttUsername = mqttusername;
+	GLOBAL::MqttPassword = mqttpassword;
 	saveConfig();
 	ESP.restart();
 }
@@ -141,6 +147,8 @@ void HandleSetConfig() {
 	String mqtttopicprefix = WebServer.arg("mqtttopicprefix");
 	String mqttsvr = WebServer.arg("mqttsvr");
 	String mqttclientid = WebServer.arg("mqttclientid");
+	String mqttusername = WebServer.arg("mqttusername");
+	String mqttpassword = WebServer.arg("mqttpassword");
 	if (!mqtttopicprefix.endsWith("/")) mqtttopicprefix.concat("/");
 	if ((mqtttopicprefix == "") | (mqttclientid == "")){
 		offmessage = "Data incomplete";
@@ -152,6 +160,8 @@ void HandleSetConfig() {
 	GLOBAL::MqttTopicPrefix = mqtttopicprefix;
 	GLOBAL::MqttBrokerIP = mqttsvr;
 	GLOBAL::MqttClientId = mqttclientid;
+	GLOBAL::MqttUsername = mqttusername;
+	GLOBAL::MqttPassword = mqttpassword;
 	saveConfig();
 	ESP.restart();
 }
@@ -173,6 +183,8 @@ void HandleConfig() {
 	content.replace("{mqttserver}", GLOBAL::MqttBrokerIP);
 	content.replace("{mqtttopicprefix}", GLOBAL::MqttTopicPrefix);
 	content.replace("{mqttclientid}", GLOBAL::MqttClientId);
+	content.replace("{mqttusername}", GLOBAL::MqttUsername);
+	content.replace("{mqttpassword}", GLOBAL::MqttPassword);
 	content.concat(FPSTR(HTTP_MENU_BACK));
 
 	ShowPage(content, FPSTR(HTTP_MAIN_SCRIPT), FPSTR(HTTP_STYLE));

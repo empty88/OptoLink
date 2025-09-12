@@ -10,6 +10,8 @@ String GLOBAL::NtpServerIP = "";
 String GLOBAL::MqttTopicPrefix = "";
 String GLOBAL::MqttBrokerIP = "";
 String GLOBAL::MqttClientId = "";
+String GLOBAL::MqttUsername = "";
+String GLOBAL::MqttPassword = "";
 
 void readConfig() {
 	LittleFS.begin();
@@ -24,11 +26,13 @@ void readConfig() {
 
 	configFile.seek(0);
 	GLOBAL::WlanSSID = removeTrailingCR(configFile.readStringUntil('\n'));
-	GLOBAL::WlanPasswd= removeTrailingCR(configFile.readStringUntil('\n'));
-	GLOBAL::NtpServerIP= removeTrailingCR(configFile.readStringUntil('\n'));
-	GLOBAL::MqttTopicPrefix= removeTrailingCR(configFile.readStringUntil('\n'));
-	GLOBAL::MqttBrokerIP= removeTrailingCR(configFile.readStringUntil('\n'));
-	GLOBAL::MqttClientId= removeTrailingCR(configFile.readStringUntil('\n'));
+	GLOBAL::WlanPasswd = removeTrailingCR(configFile.readStringUntil('\n'));
+	GLOBAL::NtpServerIP = removeTrailingCR(configFile.readStringUntil('\n'));
+	GLOBAL::MqttTopicPrefix = removeTrailingCR(configFile.readStringUntil('\n'));
+	GLOBAL::MqttBrokerIP = removeTrailingCR(configFile.readStringUntil('\n'));
+	GLOBAL::MqttClientId = removeTrailingCR(configFile.readStringUntil('\n'));
+	GLOBAL::MqttUsername = removeTrailingCR(configFile.readStringUntil('\n'));
+	GLOBAL::MqttPassword = removeTrailingCR(configFile.readStringUntil('\n'));
 	configFile.close();
 }
 
@@ -41,6 +45,8 @@ void saveConfig() {
 	configFile.println(GLOBAL::MqttTopicPrefix); // MQTT topic prefix
 	configFile.println(GLOBAL::MqttBrokerIP); 	// MQTT broker
 	configFile.println(GLOBAL::MqttClientId); 	// MQTT client id
+	configFile.println(GLOBAL::MqttUsername);	// MQTT Username
+	configFile.println(GLOBAL::MqttPassword);	// MQTT Password
 	configFile.close();
 	configFile = LittleFS.open("_configFile", "r");
 	//Log(configFile.readString());
@@ -56,6 +62,8 @@ void resetConfig() {
 	configFile.println("optolink/"); 			// MQTT topic prefix
 	configFile.println(""); 					// MQTT server
 	configFile.println("optolink"); 			// MQTT client Id
+	configFile.println("");						// MQTT Username
+	configFile.println("");						// MQTT Password
 	configFile.close();
 }
 
