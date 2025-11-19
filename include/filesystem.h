@@ -6,6 +6,7 @@ void resetConfig();
 void saveConfig();
 
 String readLastError();
+void resetLastError();
 void saveLastError(String lastError);
 
 struct GLOBAL {

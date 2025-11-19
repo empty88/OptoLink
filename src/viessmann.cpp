@@ -183,8 +183,8 @@ void stoerungsmeldungCallbackHandler(const IDatapoint& dp, DPValue dpvalue) {
     
     uint8_t errorCode = strtol(dpString.substring(0,2).c_str(), 0, 16);
     String errorMessage = getErrorMessage(errorCode);       // resolve error code to error message
-    char payload[100];
-    char errorIdentifier[100];
+    char payload[130];
+    char errorIdentifier[130];
     sprintf(errorIdentifier, "%s.%s.%s %s:%s:%s Uhr#%d",dpString.substring(8,10).c_str(),dpString.substring(6,8).c_str(),dpString.substring(4,6).c_str(),dpString.substring(12,14).c_str(),dpString.substring(14,16).c_str(),dpString.substring(16,18).c_str(), errorCode); // create unique string to compare errors
     sprintf(payload, "%s.%s.%s %s:%s:%s Uhr#%s#%s",dpString.substring(8,10).c_str(),dpString.substring(6,8).c_str(),dpString.substring(4,6).c_str(),dpString.substring(12,14).c_str(),dpString.substring(14,16).c_str(),dpString.substring(16,18).c_str(), errorMessage.c_str(), dpString.substring(0,2).c_str());
     publishMqtt(dp.getName(), payload);

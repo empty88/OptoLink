@@ -83,6 +83,13 @@ void saveLastError(String lastError) {
 	configFile.close();
 }
 
+void resetLastError() {
+	Log("Reset last error");
+	File configFile = LittleFS.open("_lastError", "w");
+	configFile.println();
+	configFile.close();
+}
+
 String removeTrailingCR(String input)
 {
 	if (!input)

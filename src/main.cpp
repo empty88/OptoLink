@@ -41,6 +41,7 @@ void setup() {
   		WiFi.softAP(_STA_ssid);
 		StartWebServer(true);
 		configMode = true;
+		resetLastError();
 	} else {
   		setupWiFi();
 
